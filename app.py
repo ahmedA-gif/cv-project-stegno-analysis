@@ -1,4 +1,4 @@
-import os, sys, math, io, json, warnings, time
+import os, sys, math, io, json, warnings, time, urllib.request
 
 warnings.filterwarnings('ignore')
 
@@ -360,9 +360,27 @@ class ModelWrapper:
         self.urd = None
         self.loaded = False
 
+    _RELEASE_BASE = 'https://github.com/ahmedA-gif/cv-project-stegno-analysis/releases/download/v1.0.0'
+
+    def _download_if_missing(self, path, url):
+        if os.path.exists(path):
+            return True
+        print(f"  Downloading {os.path.basename(path)} from GitHub release...")
+        try:
+            urllib.request.urlretrieve(url, path)
+            size_mb = os.path.getsize(path) / (1024*1024)
+            print(f"  Downloaded {size_mb:.0f} MB")
+            return True
+        except Exception as e:
+            print(f"  Download failed: {e}")
+            return False
+
     def load(self):
         svm_path = os.path.join(MODELS_DIR, 'robust_svm.pkl')
         urd_path = os.path.join(MODELS_DIR, 'urd.pkl')
+
+        self._download_if_missing(svm_path, f'{self._RELEASE_BASE}/robust_svm.pkl')
+        self._download_if_missing(urd_path, f'{self._RELEASE_BASE}/urd.pkl')
 
         if os.path.exists(svm_path):
             try:
@@ -446,6 +464,7 @@ class ModelWrapper:
         return results
 
 model_wrapper = ModelWrapper()
+model_wrapper.load()
 
 # ── Flask Routes ─────────────────────────────────────────────────────────────
 @app.route('/')
@@ -475,6 +494,8 @@ def api_metrics():
 
 @app.route('/api/predict', methods=['POST'])
 def api_predict():
+    if not model_wrapper.loaded:
+        return jsonify({'error': 'Models not loaded - server still initializing'}), 503
     if 'image' not in request.files:
         return jsonify({'error': 'No image file provided'}), 400
     file = request.files['image']
@@ -533,13 +554,5 @@ def api_metrics_histogram():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5050))
-    print("=" * 50)
-    print("SteganoScan Backend — Loading models...")
-    print("=" * 50)
-    model_wrapper.load()
-    print()
-    print(f"  robust_svm: {'LOADED' if model_wrapper.robust_svm else 'NOT FOUND'}")
-    print(f"  urd:        {'LOADED' if model_wrapper.urd else 'NOT FOUND'}")
-    print()
-    print(f"Starting Flask server on http://0.0.0.0:{port}")
+    print(f"Starting development server on http://0.0.0.0:{port}")
     app.run(debug=False, host='0.0.0.0', port=port)
