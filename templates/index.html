@@ -3,84 +3,130 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>// STEGANOSCAN — Neural Forensics Terminal</title>
+<title>⦿ STEGANOSCAN // neural forensics terminal v4.2</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--neon:#00ff41;--dim:#00b82e;--cyber:#00eefc;--amber:#ffb000;--bg:#0a0a0a;--red:#ff3355;--cyan:#00eefc}
+:root{--neon:#00ff41;--dim:#00b82e;--cyber:#00eefc;--amber:#ffb000;--bg:#050505;--red:#ff1744;--cyan:#00eefc}
 body{background:var(--bg);color:#c8d6c0;font-family:'JetBrains Mono',monospace;overflow-x:hidden;line-height:1.5}
-canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-5;opacity:.12}
-.scanlines{position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.03) 2px,rgba(0,255,65,.03) 4px);pointer-events:none;z-index:100}
-.crt::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.4) 100%);pointer-events:none;z-index:99}
-.neon{color:var(--neon);text-shadow:0 0 7px var(--neon),0 0 10px var(--neon),0 0 21px var(--neon)}
+canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-5;opacity:.25}
+.scanlines{position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.05) 2px,rgba(0,255,65,.05) 4px);pointer-events:none;z-index:100}
+.crt::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.6) 100%);pointer-events:none;z-index:99}
+.neon{color:var(--neon);text-shadow:0 0 5px var(--neon),0 0 10px var(--neon),0 0 20px var(--neon),0 0 40px rgba(0,255,65,.3)}
 .neon-bg{box-shadow:0 0 7px rgba(0,255,65,.2),0 0 15px rgba(0,255,65,.1)}
-.amber{color:var(--amber);text-shadow:0 0 7px var(--amber)}
-.cyber{color:var(--cyber);text-shadow:0 0 7px var(--cyber)}
-.red{color:var(--red);text-shadow:0 0 7px var(--red)}
-.glass{background:rgba(12,12,12,.85);backdrop-filter:blur(8px);border:1px solid rgba(0,255,65,.15)}
-.border-neon{border-color:rgba(0,255,65,.3)!important}
-.border-neon:hover{border-color:var(--neon)!important;box-shadow:0 0 15px rgba(0,255,65,.2)}
+.amber{color:var(--amber);text-shadow:0 0 5px var(--amber),0 0 10px rgba(255,176,0,.3)}
+.cyber{color:var(--cyber);text-shadow:0 0 5px var(--cyber),0 0 10px rgba(0,238,252,.3)}
+.red{color:var(--red);text-shadow:0 0 5px var(--red),0 0 10px rgba(255,23,68,.3)}
+.glass{background:rgba(8,8,8,.92);backdrop-filter:blur(12px);border:1px solid rgba(0,255,65,.12);position:relative}
+.glass::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.3}
+.border-neon{border-color:rgba(0,255,65,.25)!important}
+.border-neon:hover{border-color:var(--neon)!important;box-shadow:0 0 20px rgba(0,255,65,.15),inset 0 0 20px rgba(0,255,65,.03)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 @keyframes scan{0%{top:-100%}100%{top:100%}}
-@keyframes glitch{0%{transform:translate(0)}20%{transform:translate(-2px,2px)}40%{transform:translate(2px,-2px)}60%{transform:translate(-1px,1px)}80%{transform:translate(1px,-1px)}100%{transform:translate(0)}}
+@keyframes glitch{0%{transform:translate(0)}20%{transform:translate(-3px,2px) skewX(-2deg)}40%{transform:translate(3px,-1px) skewX(1deg)}60%{transform:translate(-1px,3px) skewX(-1deg)}80%{transform:translate(2px,-3px) skewX(2deg)}100%{transform:translate(0)}}
+@keyframes glitchText{0%{opacity:1}5%{opacity:0;transform:translate(-2px,-1px)}10%{opacity:1}15%{opacity:0;transform:translate(2px,1px)}20%{opacity:1}100%{opacity:1}}
 @keyframes typing{from{width:0}to{width:100%}}
-@keyframes pulse-glow{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes pulse-glow{0%,100%{opacity:.5}50%{opacity:1}}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.3}94%{opacity:1}96%{opacity:.5}97%{opacity:1}}
+@keyframes bootPulse{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+@keyframes borderPulse{0%,100%{border-color:rgba(0,255,65,.12)}50%{border-color:rgba(0,255,65,.3)}}
 .animate-blink{animation:blink 1s step-end infinite}
 .animate-scan{animation:scan 3s linear infinite}
-.animate-glitch{animation:glitch .3s ease-in-out infinite}
+.animate-glitch{animation:glitch .15s ease-in-out 3}
+.animate-glitch-text{animation:glitchText 3s ease-in-out infinite}
 .animate-pulse-glow{animation:pulse-glow 2s ease-in-out infinite}
 .animate-spin{animation:spin 1s linear infinite}
+.animate-flicker{animation:flicker 5s infinite}
+.animate-boot-pulse{animation:bootPulse 1.5s ease-in-out infinite}
+.animate-border-pulse{animation:borderPulse 3s ease-in-out infinite}
 .terminal-scroll::-webkit-scrollbar{width:3px}
 .terminal-scroll::-webkit-scrollbar-track{background:var(--bg)}
 .terminal-scroll::-webkit-scrollbar-thumb{background:var(--neon);border-radius:2px}
-.drop-zone{border:1px dashed rgba(0,255,65,.3)}
-.drop-zone.dragover{border-color:var(--neon)!important;background:rgba(0,255,65,.05)!important;box-shadow:0 0 30px rgba(0,255,65,.15)}
-.tab-btn{font-size:11px;letter-spacing:.15em;padding:10px 20px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase}
-.tab-btn.active{color:var(--neon);border-bottom-color:var(--neon);background:rgba(0,255,65,.04)}
-.tab-btn:not(.active){color:rgba(200,214,192,.4)}
-.tab-btn:not(.active):hover{color:rgba(200,214,192,.7)}
+.drop-zone{border:1px dashed rgba(0,255,65,.25);transition:all .3s}
+.drop-zone.dragover{border-color:var(--neon)!important;background:rgba(0,255,65,.08)!important;box-shadow:0 0 40px rgba(0,255,65,.2),inset 0 0 40px rgba(0,255,65,.05)}
+.tab-btn{font-size:10px;letter-spacing:.2em;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;transition:all .25s;text-transform:uppercase;position:relative}
+.tab-btn.active{color:var(--neon);border-bottom-color:var(--neon);background:rgba(0,255,65,.06);text-shadow:0 0 8px var(--neon)}
+.tab-btn:not(.active){color:rgba(200,214,192,.3)}
+.tab-btn:not(.active):hover{color:rgba(200,214,192,.6);border-bottom-color:rgba(0,255,65,.2)}
+.tab-btn::before{content:'[';opacity:0;transition:opacity .2s}
+.tab-btn::after{content:']';opacity:0;transition:opacity .2s}
+.tab-btn:hover::before,.tab-btn:hover::after,.tab-btn.active::before,.tab-btn.active::after{opacity:1}
 .typing-text{overflow:hidden;white-space:nowrap;border-right:2px solid var(--neon);animation:typing 2s steps(30) 1s forwards, blink .75s step-end infinite}
-.section-title{font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:rgba(0,255,65,.6)}
-.data-row{display:flex;flex-wrap:wrap;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,255,65,.06);font-size:12px;width:100%}
-.data-row .key{color:rgba(200,214,192,.5);min-width:120px}
-.data-row .val{color:var(--neon)}
-.scanline-enter{animation:slideIn .3s ease-out both;opacity:0}
-@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
-.prob-bar{width:100%;height:4px;background:rgba(0,255,65,.08);border-radius:2px;margin-top:4px;overflow:hidden;flex:0 0 100%}
-.prob-fill{height:100%;border-radius:2px;transition:width 1s ease-out;animation:fillBar 1s ease-out}
+.section-title{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:rgba(0,255,65,.5)}
+.data-row{display:flex;flex-wrap:wrap;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,255,65,.05);font-size:11px;width:100%}
+.data-row .key{color:rgba(200,214,192,.4)}
+.data-row .val{font-weight:500}
+.scanline-enter{animation:slideIn .35s ease-out both;opacity:0}
+@keyframes slideIn{from{opacity:0;transform:translateX(-15px)}to{opacity:1;transform:translateX(0)}}
+.prob-bar{width:100%;height:3px;background:rgba(0,255,65,.06);border-radius:2px;margin-top:4px;overflow:hidden;flex:0 0 100%}
+.prob-fill{height:100%;border-radius:2px;transition:width 1.2s ease-out;animation:fillBar 1.2s ease-out}
 @keyframes fillBar{from{width:0!important}}
-.glitch{animation:glitch .3s 3}
-.hex-grid{background:linear-gradient(rgba(0,255,65,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,65,.03) 1px,transparent 1px);background-size:20px 20px}
+.glitch{animation:glitch .2s 4}
+.hex-grid{background:linear-gradient(rgba(0,255,65,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,65,.04) 1px,transparent 1px);background-size:25px 25px}
 .status-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:6px}
-.status-dot.on{background:var(--neon);box-shadow:0 0 6px var(--neon)}
-.status-dot.off{background:var(--red);box-shadow:0 0 6px var(--red)}
-.status-dot.warn{background:var(--amber);box-shadow:0 0 6px var(--amber)}
-.forensic-result-card{border:1px solid rgba(0,255,65,.12);padding:12px;margin-bottom:8px;font-size:12px}
-.forensic-result-card .label{color:rgba(200,214,192,.4);text-transform:uppercase;font-size:10px;letter-spacing:.1em}
-.forensic-result-card .value{color:var(--neon);font-size:13px;font-weight:500}
+.status-dot.on{background:var(--neon);box-shadow:0 0 8px var(--neon)}
+.status-dot.off{background:var(--red);box-shadow:0 0 8px var(--red)}
+.status-dot.warn{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.forensic-result-card{border:1px solid rgba(0,255,65,.1);padding:12px;margin-bottom:8px;font-size:12px}
+.forensic-result-card .label{color:rgba(200,214,192,.35);text-transform:uppercase;font-size:10px;letter-spacing:.12em}
+.forensic-result-card .value{color:var(--neon);font-size:13px;font-weight:600}
+.hacker-btn{background:rgba(0,255,65,.06);border:1px solid var(--neon);color:var(--neon);padding:10px 20px;font-size:11px;letter-spacing:.25em;text-transform:uppercase;cursor:pointer;transition:all .25s;font-family:inherit;position:relative;overflow:hidden}
+.hacker-btn:hover{background:rgba(0,255,65,.15);box-shadow:0 0 25px rgba(0,255,65,.15),inset 0 0 25px rgba(0,255,65,.05);text-shadow:0 0 10px var(--neon)}
+.hacker-btn:active{transform:scale(.97)}
+.hacker-btn::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(0,255,65,.03),transparent);transform:translateX(-100%);transition:transform .6s}
+.hacker-btn:hover::before{transform:translateX(100%)}
+.hacker-btn:disabled{opacity:.2;pointer-events:none}
+.boot-line{overflow:hidden;white-space:nowrap;animation:typing var(--boot-dur,1s) steps(var(--boot-steps,30)) forwards;width:0;font-size:11px}
+.terminal-cursor{display:inline-block;width:8px;height:14px;background:var(--neon);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px}
+.ascii-art{font-size:7px;line-height:1.1;color:rgba(0,255,65,.15);white-space:pre;letter-spacing:0;text-shadow:none}
 </style>
-<script>tailwind.config={darkMode:"class",theme:{extend:{colors:{primary:"#00ff41",secondary:"#00eefc","surface-dim":"#0a0a0a","on-surface":"#c8d6c0"}}}};</script>
+<script>tailwind.config={darkMode:"class",theme:{extend:{colors:{primary:"#00ff41",secondary:"#00eefc","surface-dim":"#050505","on-surface":"#c8d6c0"}}}};</script>
 </head>
 <body>
 <div class="scanlines"></div>
 <div class="crt"></div>
 <canvas id="matrix-canvas"></canvas>
 
+<!-- ═══ BOOT SEQUENCE OVERLAY ═══ -->
+<div id="boot-overlay" class="fixed inset-0 z-[200] bg-[#050505] flex flex-col items-center justify-center" style="transition:opacity .8s">
+  <div class="ascii-art mb-6 text-center text-[7px] leading-[1.1]" style="color:rgba(0,255,65,.2)">
+  ███████  ████████ ███████  ██████   █████  ███    ██  ██████  ███████  █████  ███    ██
+  ██         ██    ██      ██       ██   ██ ████   ██ ██       ██      ██   ██ ████   ██
+  ███████    ██    ███████ ██   ███ ███████ ██ ██  ██ ██   ███ ███████ ███████ ██ ██  ██
+       ██    ██    ██      ██    ██ ██   ██ ██  ██ ██ ██    ██      ██ ██   ██ ██  ██ ██
+  ███████    ██    ███████  ██████  ██   ██ ██   ████  ██████  ███████ ██   ██ ██   ████
+  </div>
+  <div class="text-[11px] text-[var(--neon)] mb-4 tracking-[.3em] uppercase" style="text-shadow:0 0 10px var(--neon)">Neural Forensics Terminal v4.2</div>
+  <div class="text-[10px] text-[#c8d6c060] space-y-1.5" id="boot-lines" style="max-width:420px">
+    <div class="boot-line" style="--boot-dur:.4s;--boot-steps:20">> Initializing kernel...</div>
+    <div class="boot-line" style="--boot-dur:.6s;--boot-steps:30">> Loading neural steganalysis engine...</div>
+    <div class="boot-line" style="--boot-dur:.5s;--boot-steps:25">> Mounting YOLO detection modules...</div>
+    <div class="boot-line" style="--boot-dur:.7s;--boot-steps:35">> Calibrating forensic analysis toolkit...</div>
+    <div class="boot-line" style="--boot-dur:.4s;--boot-steps:20">> Establishing secure channel...</div>
+    <div class="boot-line" style="--boot-dur:.3s;--boot-steps:15">> System ready.</div>
+  </div>
+  <div class="mt-6 flex items-center gap-2 text-xs text-[rgba(0,255,65,.4)]" id="boot-status">
+    <span class="animate-boot-pulse">⦿</span> <span>Awaiting signal...</span>
+  </div>
+</div>
+
 <!-- ═══ HEADER ═══ -->
-<header class="fixed top-0 w-full z-50 glass border-b border-neon" style="border-bottom-color:rgba(0,255,65,.15)">
+<header class="fixed top-0 w-full z-50 glass border-b" style="border-bottom-color:rgba(0,255,65,.1);animation:borderPulse 4s ease-in-out infinite">
   <div class="flex items-center justify-between px-4 h-14 max-w-7xl mx-auto">
     <div class="flex items-center gap-3">
-      <span class="neon text-lg font-bold tracking-tight">//_STEGANOSCAN</span>
-      <span class="text-[10px] text-[#c8d6c080] hidden md:inline tracking-[.3em] uppercase border-l border-[#c8d6c020] pl-3">v4.2.0 · neural forensics terminal</span>
+      <span class="neon text-base font-bold tracking-tight animate-flicker">⦿ STEGANOSCAN_</span>
+      <span class="terminal-cursor"></span>
+      <span class="text-[9px] text-[#c8d6c050] hidden md:inline tracking-[.3em] uppercase border-l border-[#c8d6c020] pl-3">neural forensics terminal // v4.2</span>
     </div>
     <div class="flex items-center gap-4">
-      <span class="flex items-center gap-2 text-xs text-[#c8d6c080]">
+      <span class="flex items-center gap-2 text-xs text-[#c8d6c060]">
         <span class="status-dot on animate-pulse-glow" id="kernel-led"></span>
-        <span id="kernel-status">BOOT_SEQ</span>
+        <span id="kernel-status" class="tracking-[.2em]">BOOT_SEQ</span>
       </span>
+      <span id="system-clock" class="text-[10px] text-[#c8d6c030] tracking-[.15em] hidden sm:inline"></span>
     </div>
   </div>
 </header>
@@ -88,13 +134,13 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
 <main class="pt-20 pb-12 px-3 max-w-7xl mx-auto relative z-10">
 
 <!-- ═══ TAB NAV ═══ -->
-<div class="flex gap-0 mb-6 border-b border-[rgba(0,255,65,.1)] overflow-x-auto" id="tabs">
-  <button class="tab-btn active" data-tab="scan">[Scan_Target]</button>
-  <button class="tab-btn" data-tab="yolo">[YOLO_Detect]</button>
-  <button class="tab-btn" data-tab="forensics">[Forensics]</button>
-  <button class="tab-btn" data-tab="tracker">[Tracker]</button>
-  <button class="tab-btn" data-tab="metrics">[Metrics]</button>
-</div>
+  <div class="flex gap-1 mb-6 border-b border-[rgba(0,255,65,.08)] overflow-x-auto" id="tabs">
+    <button class="tab-btn active" data-tab="scan">Scan_Target</button>
+    <button class="tab-btn" data-tab="yolo">YOLO_Detect</button>
+    <button class="tab-btn" data-tab="forensics">Forensics</button>
+    <button class="tab-btn" data-tab="tracker">Tracker</button>
+    <button class="tab-btn" data-tab="metrics">Metrics</button>
+  </div>
 
 <!-- ═══ TAB: SCAN ═══ -->
 <div class="tab-content" id="tab-scan">
@@ -114,8 +160,11 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
           <img id="image-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/80" />
           <input type="file" id="file-input" accept="image/*" class="hidden" />
         </div>
-        <div class="mt-3 glass p-2 text-xs text-[var(--neon)] max-h-20 overflow-y-auto" id="terminal-log" style="font-size:11px;line-height:1.6">
+        <div class="mt-3 glass p-2 text-[11px] text-[var(--neon)] max-h-24 overflow-y-auto" id="terminal-log" style="line-height:1.7;font-family:inherit">
           > <span class="animate-blink">_</span>
+        </div>
+        <div class="flex items-center gap-2 text-[9px] text-[#c8d6c030] mt-1 tracking-[.15em]">
+          <span>⏤</span> <span id="log-timestamp">--:--:--</span> <span>⏤</span> <span>SESSION: <span id="session-id">0000</span></span>
         </div>
       </div>
     </div>
@@ -194,7 +243,7 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
           <input type="file" id="yolo-file-input" accept="image/*" class="hidden" />
           <img id="yolo-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/80" />
         </div>
-        <button id="yolo-detect-btn" class="w-full bg-[rgba(0,255,65,.08)] border border-[var(--neon)] text-[var(--neon)] px-4 py-3 text-xs tracking-[.2em] uppercase hover:bg-[rgba(0,255,65,.15)] transition-all disabled:opacity-20" disabled>> Execute_Detection</button>
+        <button id="yolo-detect-btn" class="hacker-btn w-full" disabled>> Execute_Detection</button>
         <div id="yolo-status" class="text-[10px] text-[#c8d6c060] text-center"></div>
       </div>
     </div>
@@ -227,9 +276,9 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
       </div>
       <div class="flex gap-1 mb-4 flex-wrap">
         <button class="forensic-tab-btn active px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[var(--neon)] text-[var(--neon)] bg-[rgba(0,255,65,.06)] transition-all" data-method="ela">[ELA]</button>
-        <button class="forensic-tab-btn px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[rgba(0,255,65,.15)] text-[#c8d6c060] hover:border-[var(--neon)] transition-all" data-method="ocr">[OCR]</button>
-        <button class="forensic-tab-btn px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[rgba(0,255,65,.15)] text-[#c8d6c060] hover:border-[var(--neon)] transition-all" data-method="gan">[GAN]</button>
-        <button class="forensic-tab-btn px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[rgba(0,255,65,.15)] text-[#c8d6c060] hover:border-[var(--neon)] transition-all" data-method="full">[ALL-IN-1]</button>
+        <button class="forensic-tab-btn px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[rgba(0,255,65,.12)] text-[#c8d6c060] hover:border-[var(--neon)] hover:text-[var(--neon)] transition-all" data-method="ocr">[OCR]</button>
+        <button class="forensic-tab-btn px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[rgba(0,255,65,.12)] text-[#c8d6c060] hover:border-[var(--neon)] hover:text-[var(--neon)] transition-all" data-method="gan">[GAN]</button>
+        <button class="forensic-tab-btn px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[rgba(0,255,65,.12)] text-[#c8d6c060] hover:border-[var(--neon)] hover:text-[var(--neon)] transition-all" data-method="full">[ALL-IN-1]</button>
       </div>
       <div class="drop-zone bg-[rgba(0,255,65,.02)] h-44 flex flex-col items-center justify-center gap-2 cursor-pointer relative overflow-hidden" id="forensic-drop-area">
         <span class="text-2xl text-[#c8d6c040]">⊞</span>
@@ -237,7 +286,7 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
         <input type="file" id="forensic-file-input" accept="image/*" class="hidden" />
         <img id="forensic-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/80" />
       </div>
-      <button id="forensic-run-btn" class="w-full bg-[rgba(0,255,65,.08)] border border-[var(--neon)] text-[var(--neon)] px-4 py-3 text-xs tracking-[.2em] uppercase hover:bg-[rgba(0,255,65,.15)] transition-all mt-4 disabled:opacity-20" disabled>> Execute_Forensic_Scan</button>
+      <button id="forensic-run-btn" class="hacker-btn w-full mt-4" disabled>> Execute_Forensic_Scan</button>
       <div id="forensic-status" class="text-[10px] text-[#c8d6c060] text-center mt-2"></div>
     </div>
     <div class="lg:col-span-8">
@@ -278,7 +327,7 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
           <input type="file" id="tracker-file-input" accept="image/*" class="hidden" />
           <img id="tracker-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/80" />
         </div>
-        <button id="tracker-run-btn" class="w-full bg-[rgba(0,255,65,.08)] border border-[var(--neon)] text-[var(--neon)] px-4 py-3 text-xs tracking-[.2em] uppercase hover:bg-[rgba(0,255,65,.15)] transition-all disabled:opacity-20" disabled>> Execute_Tracking</button>
+        <button id="tracker-run-btn" class="hacker-btn w-full" disabled>> Execute_Tracking</button>
       </div>
     </div>
     <div class="lg:col-span-8">
@@ -331,11 +380,41 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
 
 </main>
 
-<footer class="border-t border-[rgba(0,255,65,.1)] py-4 mt-8 text-center glass">
-  <p class="text-[9px] text-[#c8d6c040] tracking-[.3em] uppercase">SteganoScan Neural Forensics Terminal v4.2 /* Steganalysis · YOLO · OCR · ELA · GAN · Multi-Tracker */</p>
+<footer class="border-t border-[rgba(0,255,65,.08)] py-5 mt-8 text-center glass">
+  <div class="text-[8px] text-[#c8d6c030] tracking-[.3em] uppercase leading-loose">
+    <span class="text-[var(--neon)]">[</span> steganalysis <span class="text-[var(--neon)]">|</span> yolo object detection <span class="text-[var(--neon)]">|</span> error level analysis <span class="text-[var(--neon)]">|</span> ocr <span class="text-[var(--neon)]">|</span> gan detection <span class="text-[var(--neon)]">|</span> multi-tracker <span class="text-[var(--neon)]">]</span>
+  </div>
+  <div class="text-[8px] text-[#c8d6c020] mt-2 tracking-[.2em]">
+    NEURAL FORENSICS TERMINAL v4.2 // <span class="animate-flicker">⦿</span> // 256-DIM SRM FEATURE SPACE // YOLOv8x/v8s/YOLO11x // SVM + URD ENSEMBLE
+  </div>
+  <div class="text-[7px] text-[#c8d6c015] mt-1 tracking-[.15em]">
+    ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ─── ───
+  </div>
 </footer>
 
 <script>
+// ══════════════════════════════════════════════════════════════════════
+// BOOT SEQUENCE
+// ══════════════════════════════════════════════════════════════════════
+setTimeout(() => {
+  const bs = document.getElementById('boot-status');
+  if (bs) { bs.innerHTML = '<span class="text-[var(--neon)]">⦿</span> <span class="text-[var(--neon)]">System online. Click to launch.</span>'; }
+  const bo = document.getElementById('boot-overlay');
+  if (bo) { bo.style.cursor = 'pointer'; bo.onclick = () => { bo.style.opacity = '0'; setTimeout(() => { bo.style.display = 'none'; const ks = document.getElementById(\'kernel-status\'); if(ks) ks.textContent = \'ONLINE\'; }, 800); }; }
+  setTimeout(() => { if (bo && bo.style.display !== 'none') { bo.style.opacity = '0'; setTimeout(() => { bo.style.display = 'none'; const ks = document.getElementById(\'kernel-status\'); if(ks) ks.textContent = \'ONLINE\'; }, 800); } }, 5000);
+}, 2500);
+
+// ══════════════════════════════════════════════════════════════════════
+// SYSTEM CLOCK
+// ══════════════════════════════════════════════════════════════════════
+function updateClock() {
+  const el = document.getElementById('system-clock');
+  if (!el) return;
+  const d = new Date();
+  el.textContent = d.toISOString().replace('T',' ').slice(0,19) + ' UTC';
+}
+setInterval(updateClock, 1000); updateClock();
+
 // ══════════════════════════════════════════════════════════════════════
 // MATRIX RAIN
 // ══════════════════════════════════════════════════════════════════════
@@ -395,8 +474,15 @@ function drawGauge(value, isThreat) {
 // ══════════════════════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════════════════════
-function log(msg){const el=document.getElementById('terminal-log');if(!el)return;const d=document.createElement('div');d.textContent='> '+msg;el.appendChild(d);el.scrollTop=el.scrollHeight}
+function log(msg){
+  const el=document.getElementById('terminal-log');if(!el)return;
+  const d=document.createElement('div');d.textContent='> '+msg;el.appendChild(d);el.scrollTop=el.scrollHeight;
+  const ts=document.getElementById('log-timestamp');if(ts)ts.textContent=new Date().toTimeString().split(' ')[0];
+}
 function readFile(file){return new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(file)})}
+const sessionId = Math.random().toString(16).slice(2,10).toUpperCase();
+const sesEl = document.getElementById('session-id');
+if (sesEl) sesEl.textContent = sessionId;
 function setupDrop(dropId,fileId,prevId,cb){
   const da=document.getElementById(dropId), fi=document.getElementById(fileId), pv=document.getElementById(prevId);
   if(!da||!fi)return;
