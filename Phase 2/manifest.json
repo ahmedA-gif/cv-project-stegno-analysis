@@ -1,0 +1,10 @@
+{
+  "created": "2026-07-08T14:38:03.036320",
+  "models": [
+    "robust_svm",
+    "urd"
+  ],
+  "train_size": 16505,
+  "val_size": 4127,
+  "feature_dim": 256
+}

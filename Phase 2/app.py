@@ -967,8 +967,7 @@ def serialize(obj):
     if isinstance(obj, list):
         return [serialize(v) for v in obj]
     if isinstance(obj, np.integer): return int(obj)
-    if isinstance(obj, (np.floating, float)):
-        return float(obj) if np.isfinite(obj) else None
+    if isinstance(obj, np.floating): return float(obj)
     if isinstance(obj, np.ndarray): return obj.tolist()
     return obj
 

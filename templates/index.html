@@ -31,7 +31,6 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
 @keyframes pulse-glow{0%,100%{opacity:.5}50%{opacity:1}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.3}94%{opacity:1}96%{opacity:.5}97%{opacity:1}}
-@keyframes bootPulse{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
 @keyframes borderPulse{0%,100%{border-color:rgba(0,255,65,.12)}50%{border-color:rgba(0,255,65,.3)}}
 .animate-blink{animation:blink 1s step-end infinite}
 .animate-scan{animation:scan 3s linear infinite}
@@ -40,7 +39,6 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
 .animate-pulse-glow{animation:pulse-glow 2s ease-in-out infinite}
 .animate-spin{animation:spin 1s linear infinite}
 .animate-flicker{animation:flicker 5s infinite}
-.animate-boot-pulse{animation:bootPulse 1.5s ease-in-out infinite}
 .animate-border-pulse{animation:borderPulse 3s ease-in-out infinite}
 .terminal-scroll::-webkit-scrollbar{width:3px}
 .terminal-scroll::-webkit-scrollbar-track{background:var(--bg)}
@@ -79,9 +77,7 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
 .hacker-btn::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(0,255,65,.03),transparent);transform:translateX(-100%);transition:transform .6s}
 .hacker-btn:hover::before{transform:translateX(100%)}
 .hacker-btn:disabled{opacity:.2;pointer-events:none}
-.boot-line{overflow:hidden;white-space:nowrap;animation:typing var(--boot-dur,1s) steps(var(--boot-steps,30)) forwards;width:0;font-size:11px}
 .terminal-cursor{display:inline-block;width:8px;height:14px;background:var(--neon);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px}
-.ascii-art{font-size:7px;line-height:1.1;color:rgba(0,255,65,.15);white-space:pre;letter-spacing:0;text-shadow:none}
 </style>
 <script>tailwind.config={darkMode:"class",theme:{extend:{colors:{primary:"#00ff41",secondary:"#00eefc","surface-dim":"#050505","on-surface":"#c8d6c0"}}}};</script>
 </head>
@@ -89,30 +85,6 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
 <div class="scanlines"></div>
 <div class="crt"></div>
 <canvas id="matrix-canvas"></canvas>
-
-<!-- ═══ BOOT SEQUENCE OVERLAY ═══ -->
-<div id="boot-overlay" class="fixed inset-0 z-[200] bg-[#050505] flex flex-col items-center justify-center" style="transition:opacity .8s">
-  <div class="ascii-art mb-6 text-center text-[7px] leading-[1.1]" style="color:rgba(0,255,65,.2)">
-  ███████  ████████ ███████  ██████   █████  ███    ██  ██████  ███████  █████  ███    ██
-  ██         ██    ██      ██       ██   ██ ████   ██ ██       ██      ██   ██ ████   ██
-  ███████    ██    ███████ ██   ███ ███████ ██ ██  ██ ██   ███ ███████ ███████ ██ ██  ██
-       ██    ██    ██      ██    ██ ██   ██ ██  ██ ██ ██    ██      ██ ██   ██ ██  ██ ██
-  ███████    ██    ███████  ██████  ██   ██ ██   ████  ██████  ███████ ██   ██ ██   ████
-  </div>
-  <div class="text-[11px] text-[var(--neon)] mb-4 tracking-[.3em] uppercase" style="text-shadow:0 0 10px var(--neon)">Neural Forensics Terminal v4.2</div>
-  <div class="text-[10px] text-[#c8d6c060] space-y-1.5" id="boot-lines" style="max-width:420px">
-    <div class="boot-line" style="--boot-dur:.4s;--boot-steps:20">> Initializing kernel...</div>
-    <div class="boot-line" style="--boot-dur:.6s;--boot-steps:30">> Loading neural steganalysis engine...</div>
-    <div class="boot-line" style="--boot-dur:.5s;--boot-steps:25">> Mounting YOLO detection modules...</div>
-    <div class="boot-line" style="--boot-dur:.7s;--boot-steps:35">> Calibrating forensic analysis toolkit...</div>
-    <div class="boot-line" style="--boot-dur:.4s;--boot-steps:20">> Establishing secure channel...</div>
-    <div class="boot-line" style="--boot-dur:.3s;--boot-steps:15">> System ready.</div>
-  </div>
-  <div class="mt-6 flex items-center gap-2 text-xs text-[rgba(0,255,65,.4)]" id="boot-status">
-    <span class="animate-boot-pulse">⦿</span> <span>Awaiting signal...</span>
-  </div>
-</div>
-
 <!-- ═══ HEADER ═══ -->
 <header class="fixed top-0 w-full z-50 glass border-b" style="border-bottom-color:rgba(0,255,65,.1);animation:borderPulse 4s ease-in-out infinite">
   <div class="flex items-center justify-between px-4 h-14 max-w-7xl mx-auto">
@@ -393,17 +365,6 @@ canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-inde
 </footer>
 
 <script>
-// ══════════════════════════════════════════════════════════════════════
-// BOOT SEQUENCE
-// ══════════════════════════════════════════════════════════════════════
-setTimeout(() => {
-  const bs = document.getElementById('boot-status');
-  if (bs) { bs.innerHTML = '<span class="text-[var(--neon)]">⦿</span> <span class="text-[var(--neon)]">System online. Click to launch.</span>'; }
-  const bo = document.getElementById('boot-overlay');
-  if (bo) { bo.style.cursor = 'pointer'; bo.onclick = () => { bo.style.opacity = '0'; setTimeout(() => { bo.style.display = 'none'; const ks = document.getElementById(\'kernel-status\'); if(ks) ks.textContent = \'ONLINE\'; }, 800); }; }
-  setTimeout(() => { if (bo && bo.style.display !== 'none') { bo.style.opacity = '0'; setTimeout(() => { bo.style.display = 'none'; const ks = document.getElementById(\'kernel-status\'); if(ks) ks.textContent = \'ONLINE\'; }, 800); } }, 5000);
-}, 2500);
-
 // ══════════════════════════════════════════════════════════════════════
 // SYSTEM CLOCK
 // ══════════════════════════════════════════════════════════════════════
