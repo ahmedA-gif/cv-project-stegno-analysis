@@ -2,7 +2,7 @@
 title: SteganoScan
 emoji: 🛡️
 colorFrom: green
-colorTo: cyan
+colorTo: blue
 sdk: docker
 app_file: app.py
 pinned: false
