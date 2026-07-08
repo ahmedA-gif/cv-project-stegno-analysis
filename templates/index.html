@@ -3,411 +3,369 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>SteganoScan | Neural Steganalysis Suite</title>
+<title>// STEGANOSCAN — Neural Forensics Terminal</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
-:root { --neon: #00e639; --neon-dim: #00b82e; --cyber: #00eefc; --bg: #0a0a0a; --surface: #131313; }
-@keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100%)} }
-@keyframes pulse-glow { 0%,100%{box-shadow:0 0 15px rgba(0,230,57,0.2)} 50%{box-shadow:0 0 40px rgba(0,230,57,0.6)} }
-@keyframes flicker { 0%,19.999%,22%,62.999%,64%,64.999%,70%,100%{opacity:1} 20%,21.999%,63%,63.999%,65%,69.999%{opacity:0.3} }
-@keyframes spin-ring { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-@keyframes pulse-ring { 0%{transform:scale(1);opacity:.6} 100%{transform:scale(1.15);opacity:0} }
-@keyframes glow-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
-@keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-@keyframes slideDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
-@keyframes terminalCursor { 0%,100%{opacity:1} 50%{opacity:0} }
-@keyframes dataStream { 0%{background-position:0 0} 100%{background-position:40px 0} }
-@keyframes radarSpin { to{transform:rotate(360deg)} }
-.animate-scanline { animation:scanline 3s linear infinite; }
-.animate-flicker { animation:flicker 5s infinite step-end; }
-.animate-pulse-glow { animation:pulse-glow 3s ease-in-out infinite; }
-.animate-spin-ring { animation:spin-ring 10s linear infinite; }
-.animate-pulse-ring { animation:pulse-ring 2s ease-out infinite; }
-.animate-slide-up { animation:slideUp .6s ease-out forwards; }
-.animate-slide-down { animation:slideDown .4s ease-out forwards; }
-.animate-terminal-cursor { animation:terminalCursor 1s step-end infinite; }
-.animate-glow-pulse { animation:glow-pulse 2s ease-in-out infinite; }
-.bg-data-stream { background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,230,57,0.03) 2px,rgba(0,230,57,0.03) 4px); animation:dataStream 1s linear infinite; }
-body { background:var(--bg); color:#e5e2e1; font-family:'Inter',sans-serif; overflow-x:hidden; }
-.font-mono { font-family:'JetBrains Mono',monospace; }
-canvas#particle-bg { position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-5; }
-.scanline-overlay { position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,0.25) 50%),linear-gradient(90deg,rgba(255,0,0,0.04),rgba(0,255,0,0.02),rgba(0,0,255,0.04));background-size:100% 4px,3px 100%;pointer-events:none;z-index:100; }
-.grid-bg { background-image:radial-gradient(circle,rgba(0,230,57,0.08) 1px,transparent 1px);background-size:32px 32px; }
-.neon-border { border-color:var(--neon) !important;box-shadow:0 0 10px rgba(0,230,57,0.15),inset 0 0 10px rgba(0,230,57,0.05); }
-.neon-text { color:var(--neon);text-shadow:0 0 10px rgba(0,230,57,0.5); }
-.cyber-text { color:var(--cyber);text-shadow:0 0 10px rgba(0,238,252,0.5); }
-.tab-btn.active { color:var(--neon);border-bottom:2px solid var(--neon);background:rgba(0,230,57,0.05); }
-.tab-btn:not(.active) { color:#84967e;border-bottom:2px solid transparent; }
-.tab-btn:not(.active):hover { color:#b9ccb2;background:rgba(0,230,57,0.02); }
-.glass { background:rgba(19,19,19,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px); }
-.terminal-scroll::-webkit-scrollbar { width:4px; }
-.terminal-scroll::-webkit-scrollbar-track { background:var(--bg); }
-.terminal-scroll::-webkit-scrollbar-thumb { background:var(--neon);border-radius:2px; }
-.drop-zone.dragover { border-color:var(--neon) !important;background:rgba(0,230,57,0.05) !important;box-shadow:0 0 30px rgba(0,230,57,0.2); }
-.loading-dots::after { content:'';animation:dots 1.5s infinite; }
-@keyframes dots { 0%{content:''} 33%{content:'.'} 66%{content:'..'} 100%{content:'...'} }
-.gauge-ring { transition:stroke-dashoffset 1.5s ease-in-out; }
-.flip-in { animation:flipIn .5s ease-out forwards; }
-@keyframes flipIn { 0%{transform:rotateX(-90deg);opacity:0} 100%{transform:rotateX(0);opacity:1} }
-.result-card { animation:slideUp .5s ease-out forwards;opacity:0; }
-.result-card:nth-child(1){animation-delay:0s}
-.result-card:nth-child(2){animation-delay:.1s}
-.result-card:nth-child(3){animation-delay:.2s}
-.result-card:nth-child(4){animation-delay:.3s}
-.scanner-ring { width:200px;height:200px;border-radius:50%;border:2px solid rgba(0,230,57,0.1);position:relative; }
-.scanner-ring-inner { position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(0,230,57,0.2); }
-.scanner-sweep { position:absolute;top:0;left:50%;width:2px;height:50%;background:linear-gradient(to bottom,var(--neon),transparent);transform-origin:bottom center;animation:radarSpin 3s linear infinite; }
-.scanner-dot { position:absolute;top:-4px;left:50%;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--neon);box-shadow:0 0 15px var(--neon);animation:glow-pulse 1s ease-in-out infinite; }
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--neon:#00ff41;--dim:#00b82e;--cyber:#00eefc;--amber:#ffb000;--bg:#0a0a0a;--red:#ff3355;--cyan:#00eefc}
+body{background:var(--bg);color:#c8d6c0;font-family:'JetBrains Mono',monospace;overflow-x:hidden;line-height:1.5}
+canvas#matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-5;opacity:.12}
+.scanlines{position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.03) 2px,rgba(0,255,65,.03) 4px);pointer-events:none;z-index:100}
+.crt::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.4) 100%);pointer-events:none;z-index:99}
+.neon{color:var(--neon);text-shadow:0 0 7px var(--neon),0 0 10px var(--neon),0 0 21px var(--neon)}
+.neon-bg{box-shadow:0 0 7px rgba(0,255,65,.2),0 0 15px rgba(0,255,65,.1)}
+.amber{color:var(--amber);text-shadow:0 0 7px var(--amber)}
+.cyber{color:var(--cyber);text-shadow:0 0 7px var(--cyber)}
+.red{color:var(--red);text-shadow:0 0 7px var(--red)}
+.glass{background:rgba(12,12,12,.85);backdrop-filter:blur(8px);border:1px solid rgba(0,255,65,.15)}
+.border-neon{border-color:rgba(0,255,65,.3)!important}
+.border-neon:hover{border-color:var(--neon)!important;box-shadow:0 0 15px rgba(0,255,65,.2)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes scan{0%{top:-100%}100%{top:100%}}
+@keyframes glitch{0%{transform:translate(0)}20%{transform:translate(-2px,2px)}40%{transform:translate(2px,-2px)}60%{transform:translate(-1px,1px)}80%{transform:translate(1px,-1px)}100%{transform:translate(0)}}
+@keyframes typing{from{width:0}to{width:100%}}
+@keyframes pulse-glow{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.animate-blink{animation:blink 1s step-end infinite}
+.animate-scan{animation:scan 3s linear infinite}
+.animate-glitch{animation:glitch .3s ease-in-out infinite}
+.animate-pulse-glow{animation:pulse-glow 2s ease-in-out infinite}
+.animate-spin{animation:spin 1s linear infinite}
+.terminal-scroll::-webkit-scrollbar{width:3px}
+.terminal-scroll::-webkit-scrollbar-track{background:var(--bg)}
+.terminal-scroll::-webkit-scrollbar-thumb{background:var(--neon);border-radius:2px}
+.drop-zone{border:1px dashed rgba(0,255,65,.3)}
+.drop-zone.dragover{border-color:var(--neon)!important;background:rgba(0,255,65,.05)!important;box-shadow:0 0 30px rgba(0,255,65,.15)}
+.tab-btn{font-size:11px;letter-spacing:.15em;padding:10px 20px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase}
+.tab-btn.active{color:var(--neon);border-bottom-color:var(--neon);background:rgba(0,255,65,.04)}
+.tab-btn:not(.active){color:rgba(200,214,192,.4)}
+.tab-btn:not(.active):hover{color:rgba(200,214,192,.7)}
+.typing-text{overflow:hidden;white-space:nowrap;border-right:2px solid var(--neon);animation:typing 2s steps(30) 1s forwards, blink .75s step-end infinite}
+.section-title{font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:rgba(0,255,65,.6)}
+.data-row{display:flex;flex-wrap:wrap;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,255,65,.06);font-size:12px;width:100%}
+.data-row .key{color:rgba(200,214,192,.5);min-width:120px}
+.data-row .val{color:var(--neon)}
+.scanline-enter{animation:slideIn .3s ease-out both;opacity:0}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.prob-bar{width:100%;height:4px;background:rgba(0,255,65,.08);border-radius:2px;margin-top:4px;overflow:hidden;flex:0 0 100%}
+.prob-fill{height:100%;border-radius:2px;transition:width 1s ease-out;animation:fillBar 1s ease-out}
+@keyframes fillBar{from{width:0!important}}
+.glitch{animation:glitch .3s 3}
+.hex-grid{background:linear-gradient(rgba(0,255,65,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,65,.03) 1px,transparent 1px);background-size:20px 20px}
+.status-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:6px}
+.status-dot.on{background:var(--neon);box-shadow:0 0 6px var(--neon)}
+.status-dot.off{background:var(--red);box-shadow:0 0 6px var(--red)}
+.status-dot.warn{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.forensic-result-card{border:1px solid rgba(0,255,65,.12);padding:12px;margin-bottom:8px;font-size:12px}
+.forensic-result-card .label{color:rgba(200,214,192,.4);text-transform:uppercase;font-size:10px;letter-spacing:.1em}
+.forensic-result-card .value{color:var(--neon);font-size:13px;font-weight:500}
 </style>
-<script>
-tailwind.config={darkMode:"class",theme:{extend:{colors:{"error":"#ffb4ab","surface-dim":"#0a0a0a","on-secondary":"#00363a","surface-container-low":"#1c1b1b","primary":"#00e639","secondary":"#00eefc","on-surface":"#e5e2e1","background":"#0a0a0a","surface":"#131313","surface-container":"#201f1f","on-surface-variant":"#b9ccb2","outline-variant":"#3b4b37","outline":"#84967e","error-container":"#93000a"},fontFamily:{"mono":["JetBrains Mono"]}}}}
-</script>
+<script>tailwind.config={darkMode:"class",theme:{extend:{colors:{primary:"#00ff41",secondary:"#00eefc","surface-dim":"#0a0a0a","on-surface":"#c8d6c0"}}}};</script>
 </head>
 <body>
-<div class="scanline-overlay"></div>
-<canvas id="particle-bg"></canvas>
+<div class="scanlines"></div>
+<div class="crt"></div>
+<canvas id="matrix-canvas"></canvas>
 
-<!-- Header -->
-<header class="fixed top-0 w-full z-50 glass border-b border-outline-variant/50 animate-slide-down">
-  <div class="flex items-center justify-between px-6 h-16 max-w-7xl mx-auto">
-    <div class="flex items-center gap-4">
-      <div class="relative w-10 h-10">
-        <div class="absolute inset-0 rounded-full bg-primary/20 animate-pulse-ring"></div>
-        <div class="absolute inset-1 rounded-full bg-primary flex items-center justify-center font-mono font-bold text-black text-lg">S</div>
-      </div>
-      <span class="font-mono text-xl font-bold neon-text tracking-tighter">SteganoScan</span>
-      <span class="hidden md:inline font-mono text-[10px] text-outline uppercase tracking-[.3em] border-l border-outline-variant pl-4">Neural Forensics Suite v4.2</span>
+<!-- ═══ HEADER ═══ -->
+<header class="fixed top-0 w-full z-50 glass border-b border-neon" style="border-bottom-color:rgba(0,255,65,.15)">
+  <div class="flex items-center justify-between px-4 h-14 max-w-7xl mx-auto">
+    <div class="flex items-center gap-3">
+      <span class="neon text-lg font-bold tracking-tight">//_STEGANOSCAN</span>
+      <span class="text-[10px] text-[#c8d6c080] hidden md:inline tracking-[.3em] uppercase border-l border-[#c8d6c020] pl-3">v4.2.0 · neural forensics terminal</span>
     </div>
     <div class="flex items-center gap-4">
-      <span class="flex items-center gap-2 font-mono text-xs text-outline">
-        <span class="w-2 h-2 rounded-full bg-primary animate-pulse-glow" id="kernel-led"></span>
-        <span id="kernel-status">INITIALIZING</span>
+      <span class="flex items-center gap-2 text-xs text-[#c8d6c080]">
+        <span class="status-dot on animate-pulse-glow" id="kernel-led"></span>
+        <span id="kernel-status">BOOT_SEQ</span>
       </span>
     </div>
   </div>
 </header>
 
-<main class="pt-24 pb-12 px-4 max-w-7xl mx-auto relative z-10">
+<main class="pt-20 pb-12 px-3 max-w-7xl mx-auto relative z-10">
 
-  <!-- Tab Navigation -->
-  <div class="flex gap-1 mb-8 border-b border-outline-variant/30 overflow-x-auto" id="tabs">
-    <button class="tab-btn active px-6 py-3 font-mono text-sm uppercase tracking-widest transition-all" data-tab="scan">Scan</button>
-    <button class="tab-btn px-6 py-3 font-mono text-sm uppercase tracking-widest transition-all" data-tab="yolo">YOLO</button>
-    <button class="tab-btn px-6 py-3 font-mono text-sm uppercase tracking-widest transition-all" data-tab="forensics">Forensics</button>
-    <button class="tab-btn px-6 py-3 font-mono text-sm uppercase tracking-widest transition-all" data-tab="tracker">Tracker</button>
-    <button class="tab-btn px-6 py-3 font-mono text-sm uppercase tracking-widest transition-all" data-tab="metrics">Metrics</button>
-  </div>
+<!-- ═══ TAB NAV ═══ -->
+<div class="flex gap-0 mb-6 border-b border-[rgba(0,255,65,.1)] overflow-x-auto" id="tabs">
+  <button class="tab-btn active" data-tab="scan">[Scan_Target]</button>
+  <button class="tab-btn" data-tab="yolo">[YOLO_Detect]</button>
+  <button class="tab-btn" data-tab="forensics">[Forensics]</button>
+  <button class="tab-btn" data-tab="tracker">[Tracker]</button>
+  <button class="tab-btn" data-tab="metrics">[Metrics]</button>
+</div>
 
-  <!-- ═══ TAB: SCAN ═══ -->
-  <div class="tab-content" id="tab-scan">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-      <div class="lg:col-span-5 flex flex-col gap-6">
-        <div class="glass border border-outline-variant/30 p-6 neon-border">
-          <div class="flex items-center gap-3 mb-6">
-            <span class="material-symbols-outlined text-primary">radar</span>
-            <h2 class="font-mono text-primary text-lg uppercase tracking-wider">Upload Target</h2>
+<!-- ═══ TAB: SCAN ═══ -->
+<div class="tab-content" id="tab-scan">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div class="lg:col-span-5 flex flex-col gap-4">
+      <div class="glass p-5 border-neon">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-[var(--neon)] text-sm">⦿</span>
+          <span class="section-title">Target Acquisition</span>
+        </div>
+        <div class="drop-zone bg-[rgba(0,255,65,.02)] h-64 flex flex-col items-center justify-center gap-3 cursor-pointer relative overflow-hidden" id="drop-area">
+          <div class="text-center z-10">
+            <div class="text-3xl neon mb-2">⌁</div>
+            <p class="text-xs neon tracking-[.2em]">DROP IMAGE FOR ANALYSIS</p>
+            <p class="text-[10px] text-[#c8d6c060] mt-1">PNG · JPG · TIFF · WEBP ≤ 50MB</p>
           </div>
-          <div class="border-2 border-dashed border-outline-variant/50 bg-surface-container-low/50 h-72 flex flex-col items-center justify-center gap-4 hover:border-primary transition-all duration-300 drop-zone cursor-pointer relative overflow-hidden" id="drop-area">
-            <div class="scanner-ring">
-              <div class="scanner-ring-inner"></div>
-              <div class="scanner-sweep"></div>
-              <div class="scanner-dot"></div>
-            </div>
-            <div class="text-center z-10">
-              <p class="font-mono text-sm text-primary uppercase tracking-wider">Drop Image Here</p>
-              <p class="text-xs text-outline mt-1">PNG · JPG · TIFF · WEBP (max 50MB)</p>
-            </div>
-            <img id="image-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/60" />
-            <input type="file" id="file-input" accept="image/*" class="hidden" />
-          </div>
-          <div class="mt-4 glass border border-outline-variant/30 p-3 font-mono text-xs text-primary-fixed-dim max-h-24 overflow-y-auto terminal-scroll" id="terminal-log">
-            <span class="text-outline">$ </span>_ <span class="animate-terminal-cursor">|</span>
-          </div>
+          <img id="image-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/80" />
+          <input type="file" id="file-input" accept="image/*" class="hidden" />
+        </div>
+        <div class="mt-3 glass p-2 text-xs text-[var(--neon)] max-h-20 overflow-y-auto" id="terminal-log" style="font-size:11px;line-height:1.6">
+          > <span class="animate-blink">_</span>
         </div>
       </div>
+    </div>
 
-      <!-- Results Panel -->
-      <div class="lg:col-span-7">
-        <div id="results-placeholder" class="glass border border-outline-variant/30 p-8 text-center">
-          <span class="material-symbols-outlined text-outline text-6xl mb-4">cell_tower</span>
-          <p class="font-mono text-sm text-outline uppercase tracking-wider">Awaiting Input</p>
-          <p class="text-xs text-outline/50 mt-2">Upload an image to begin neural steganalysis</p>
-        </div>
-        <div id="results-section" class="hidden space-y-4">
-          <!-- Verdict Card -->
-          <div class="glass border border-outline-variant/30 p-6 neon-border result-card" id="verdict-card">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="font-mono text-sm text-outline uppercase tracking-widest">Analysis Verdict</h3>
-              <span class="font-mono text-[10px] text-outline border border-outline-variant/30 px-2 py-1" id="model-used">Model: --</span>
-            </div>
-            <div class="flex items-center gap-6">
-              <div class="relative w-24 h-24">
-                <canvas id="gauge-canvas" width="96" height="96"></canvas>
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <span class="font-mono text-2xl font-bold" id="gauge-value">0%</span>
-                </div>
-              </div>
-              <div>
-                <div class="flex items-center gap-3 mb-2">
-                  <span class="material-symbols-outlined text-3xl" id="verdict-icon">radio_button_unchecked</span>
-                  <span class="font-mono text-2xl font-bold uppercase tracking-tighter" id="verdict-text">Analyzing</span>
-                </div>
-                <p class="text-xs text-outline" id="prediction-prob">P(stego) = 0.0000 | threshold = 0.500</p>
-                <p class="text-xs text-outline/50 mt-1" id="inference-time">Inference: -- ms</p>
+    <div class="lg:col-span-7">
+      <div id="results-placeholder" class="glass p-8 text-center h-full flex flex-col items-center justify-center">
+        <div class="text-4xl text-[#c8d6c020] mb-3">◈</div>
+        <p class="text-xs text-[#c8d6c040] tracking-[.2em] uppercase">Awaiting Input Signal</p>
+        <p class="text-[10px] text-[#c8d6c030] mt-1">Deploy image to initiate neural steganalysis</p>
+      </div>
+
+      <div id="results-section" class="hidden space-y-3">
+        <div class="glass p-5 border-neon">
+          <div class="flex items-center justify-between mb-4">
+            <span class="section-title">⫸ Analysis Verdict</span>
+            <span class="text-[10px] text-[#c8d6c060] border border-[rgba(0,255,65,.15)] px-2 py-1" id="model-used">MODEL: --</span>
+          </div>
+          <div class="flex items-center gap-5">
+            <div class="relative w-20 h-20 flex-shrink-0">
+              <canvas id="gauge-canvas" width="80" height="80"></canvas>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="font-bold text-sm" id="gauge-value">0%</span>
               </div>
             </div>
-          </div>
-
-          <!-- Stats Grid -->
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="glass border border-outline-variant/30 p-4 result-card"><p class="text-[10px] text-outline uppercase font-mono tracking-wider">Chi-Square</p><p class="font-mono text-lg text-primary" id="stat-chi2">0.000</p><div class="h-1.5 bg-surface-variant mt-2"><div class="h-full bg-primary" id="bar-chi2" style="width:0%"></div></div></div>
-            <div class="glass border border-outline-variant/30 p-4 result-card"><p class="text-[10px] text-outline uppercase font-mono tracking-wider">RS Analysis</p><p class="font-mono text-lg text-secondary" id="stat-rs">0.0%</p><div class="h-1.5 bg-surface-variant mt-2"><div class="h-full bg-secondary" id="bar-rs" style="width:0%"></div></div></div>
-            <div class="glass border border-outline-variant/30 p-4 result-card"><p class="text-[10px] text-outline uppercase font-mono tracking-wider">Entropy</p><p class="font-mono text-lg text-primary-fixed-dim" id="metric-entropy">7.9982</p></div>
-            <div class="glass border border-outline-variant/30 p-4 result-card"><p class="text-[10px] text-outline uppercase font-mono tracking-wider">LSB Density</p><p class="font-mono text-lg text-error" id="metric-lsb">0.000</p></div>
-          </div>
-
-          <!-- Noise Distribution -->
-          <div class="glass border border-outline-variant/30 p-4 result-card">
-            <h4 class="font-mono text-xs text-outline uppercase tracking-widest mb-3">Spectral Variance Map (Blue Channel)</h4>
-            <div class="h-24 bg-surface-container-high border border-outline-variant/30 relative flex items-end px-2 gap-1" id="noise-bars">
-              <div class="flex-grow bg-primary/40 h-[20%]"></div>
-              <div class="flex-grow bg-primary/60 h-[45%]"></div>
-              <div class="flex-grow bg-primary/80 h-[85%]"></div>
-              <div class="flex-grow bg-primary h-[60%]"></div>
-              <div class="flex-grow bg-primary/70 h-[30%]"></div>
-              <div class="flex-grow bg-primary/50 h-[95%]"></div>
-              <div class="flex-grow bg-primary/90 h-[40%]"></div>
-              <div class="absolute inset-0 flex flex-col justify-between opacity-10 pointer-events-none"><div class="border-b border-white w-full"></div><div class="border-b border-white w-full"></div><div class="border-b border-white w-full"></div></div>
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span id="verdict-icon" class="text-lg">◌</span>
+                <span class="font-bold text-base uppercase tracking-tight" id="verdict-text">--</span>
+              </div>
+              <p class="text-[11px] text-[#c8d6c060]" id="prediction-prob">P(stego) = —</p>
+              <p class="text-[10px] text-[#c8d6c040]" id="inference-time">INFERENCE: --</p>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ═══ TAB: YOLO ═══ -->
-  <div class="tab-content hidden" id="tab-yolo">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div class="lg:col-span-4 glass border border-outline-variant/30 p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <span class="material-symbols-outlined text-primary">view_in_ar</span>
-          <h2 class="font-mono text-primary text-lg uppercase">YOLO Detection</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="glass p-3"><p class="section-title mb-1" style="font-size:9px">Chi-Square</p><p class="text-sm" id="stat-chi2">—</p><div class="h-1 bg-[rgba(0,255,65,.1)] mt-2"><div class="h-full bg-[var(--neon)]" id="bar-chi2" style="width:0%"></div></div></div>
+          <div class="glass p-3"><p class="section-title mb-1" style="font-size:9px">RS Analysis</p><p class="text-sm" id="stat-rs">—</p><div class="h-1 bg-[rgba(0,255,65,.1)] mt-2"><div class="h-full bg-[var(--cyber)]" id="bar-rs" style="width:0%"></div></div></div>
+          <div class="glass p-3"><p class="section-title mb-1" style="font-size:9px">Entropy</p><p class="text-sm" id="metric-entropy">—</p></div>
+          <div class="glass p-3"><p class="section-title mb-1" style="font-size:9px">LSB Density</p><p class="text-sm red" id="metric-lsb">—</p></div>
         </div>
-        <div class="space-y-4">
-          <div>
-            <label class="font-mono text-xs text-outline uppercase tracking-wider block mb-2">Model Selector</label>
-            <select id="yolo-model-select" class="w-full bg-surface border border-outline-variant/50 text-on-surface p-3 font-mono text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"></select>
-          </div>
-          <div class="border-2 border-dashed border-outline-variant/50 bg-surface-container-low/50 h-48 flex flex-col items-center justify-center gap-3 hover:border-primary transition-all duration-300 drop-zone cursor-pointer relative overflow-hidden" id="yolo-drop-area">
-            <span class="material-symbols-outlined text-primary text-4xl">image_search</span>
-            <p class="font-mono text-xs text-primary uppercase">Upload Image</p>
-            <input type="file" id="yolo-file-input" accept="image/*" class="hidden" />
-            <img id="yolo-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/60" />
-          </div>
-          <button id="yolo-detect-btn" class="w-full bg-primary/10 border border-primary text-primary px-4 py-3 font-mono text-sm uppercase tracking-wider hover:bg-primary/20 transition-all disabled:opacity-30" disabled>Run Detection</button>
-          <div id="yolo-status" class="font-mono text-xs text-outline text-center"></div>
-        </div>
-      </div>
-      <div class="lg:col-span-8">
-        <div id="yolo-results-placeholder" class="glass border border-outline-variant/30 p-8 text-center h-full flex flex-col items-center justify-center">
-          <span class="material-symbols-outlined text-outline text-5xl mb-4">image_search</span>
-          <p class="font-mono text-sm text-outline uppercase">Upload an image to detect objects</p>
-        </div>
-        <div id="yolo-results" class="hidden space-y-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div class="glass border border-outline-variant/30 p-4"><img id="yolo-annotated" class="w-full rounded"/><p class="font-mono text-[10px] text-outline text-center mt-2 uppercase">Annotated Detection</p></div>
-            <div class="glass border border-outline-variant/30 p-4"><img id="yolo-heatmap" class="w-full rounded"/><p class="font-mono text-[10px] text-outline text-center mt-2 uppercase">SRM Heatmap</p></div>
-          </div>
-          <div class="glass border border-outline-variant/30 p-4">
-            <h4 class="font-mono text-xs text-outline uppercase tracking-widest mb-3">Detections</h4>
-            <div class="overflow-x-auto"><table class="w-full text-xs font-mono"><thead><tr class="text-outline border-b border-outline-variant/30"><th class="text-left py-2">#</th><th class="text-left py-2">Label</th><th class="text-left py-2">Confidence</th><th class="text-left py-2">Box</th></tr></thead><tbody id="yolo-detection-table"></tbody></table></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ═══ TAB: FORENSICS ═══ -->
-  <div class="tab-content hidden" id="tab-forensics">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div class="lg:col-span-4 glass border border-outline-variant/30 p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <span class="material-symbols-outlined text-primary">forensic</span>
-          <h2 class="font-mono text-primary text-lg uppercase">Forensic Tools</h2>
-        </div>
-        <div class="flex gap-2 mb-4 flex-wrap">
-          <button class="forensic-tab-btn active px-4 py-2 font-mono text-xs uppercase tracking-wider border border-primary text-primary bg-primary/10 transition-all" data-method="ela">ELA</button>
-          <button class="forensic-tab-btn px-4 py-2 font-mono text-xs uppercase tracking-wider border border-outline-variant/50 text-outline hover:border-primary transition-all" data-method="ocr">OCR</button>
-          <button class="forensic-tab-btn px-4 py-2 font-mono text-xs uppercase tracking-wider border border-outline-variant/50 text-outline hover:border-primary transition-all" data-method="gan">GAN</button>
-          <button class="forensic-tab-btn px-4 py-2 font-mono text-xs uppercase tracking-wider border border-outline-variant/50 text-outline hover:border-primary transition-all" data-method="full">All-in-One</button>
-        </div>
-        <div class="border-2 border-dashed border-outline-variant/50 bg-surface-container-low/50 h-48 flex flex-col items-center justify-center gap-3 hover:border-primary transition-all duration-300 drop-zone cursor-pointer relative overflow-hidden" id="forensic-drop-area">
-          <span class="material-symbols-outlined text-primary text-4xl">search</span>
-          <p class="font-mono text-xs text-primary uppercase">Upload Image</p>
-          <input type="file" id="forensic-file-input" accept="image/*" class="hidden" />
-          <img id="forensic-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/60" />
-        </div>
-        <button id="forensic-run-btn" class="w-full bg-primary/10 border border-primary text-primary px-4 py-3 font-mono text-sm uppercase tracking-wider hover:bg-primary/20 transition-all mt-4 disabled:opacity-30" disabled>Run Forensic Scan</button>
-      </div>
-      <div class="lg:col-span-8">
-        <div id="forensic-results-placeholder" class="glass border border-outline-variant/30 p-8 text-center h-full flex flex-col items-center justify-center">
-          <span class="material-symbols-outlined text-outline text-5xl mb-4"> forensic</span>
-          <p class="font-mono text-sm text-outline uppercase">Select a method and upload an image</p>
-        </div>
-        <div id="forensic-results" class="hidden space-y-4">
-          <div class="glass border border-outline-variant/30 p-4"><pre id="forensic-json" class="text-xs font-mono text-primary-fixed-dim max-h-96 overflow-y-auto terminal-scroll whitespace-pre-wrap"></pre></div>
-          <div id="forensic-images" class="grid grid-cols-2 gap-4"></div>
+        <div class="glass p-4">
+          <p class="section-title mb-2" style="font-size:9px">├ Spectral Variance Map (Blue Channel)</p>
+          <div class="h-16 bg-black/60 border border-[rgba(0,255,65,.1)] flex items-end px-2 gap-1" id="noise-bars">
+            <div class="flex-grow bg-[var(--neon)]/40 h-[20%]"></div>
+            <div class="flex-grow bg-[var(--neon)]/60 h-[45%]"></div>
+            <div class="flex-grow bg-[var(--neon)]/80 h-[85%]"></div>
+            <div class="flex-grow bg-[var(--neon)] h-[60%]"></div>
+            <div class="flex-grow bg-[var(--neon)]/70 h-[30%]"></div>
+            <div class="flex-grow bg-[var(--neon)]/50 h-[95%]"></div>
+            <div class="flex-grow bg-[var(--neon)]/90 h-[40%]"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ═══ TAB: TRACKER ═══ -->
-  <div class="tab-content hidden" id="tab-tracker">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div class="lg:col-span-4 glass border border-outline-variant/30 p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <span class="material-symbols-outlined text-primary">track_changes</span>
-          <h2 class="font-mono text-primary text-lg uppercase">Object Tracking</h2>
-        </div>
-        <div class="space-y-4">
-          <div>
-            <label class="font-mono text-xs text-outline uppercase tracking-wider block mb-2">Tracker Algorithm</label>
-            <select id="tracker-select" class="w-full bg-surface border border-outline-variant/50 text-on-surface p-3 font-mono text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"></select>
-          </div>
-          <div class="border-2 border-dashed border-outline-variant/50 bg-surface-container-low/50 h-48 flex flex-col items-center justify-center gap-3 hover:border-primary transition-all duration-300 drop-zone cursor-pointer relative overflow-hidden" id="tracker-drop-area">
-            <span class="material-symbols-outlined text-primary text-4xl">track_changes</span>
-            <p class="font-mono text-xs text-primary uppercase">Upload Image</p>
-            <input type="file" id="tracker-file-input" accept="image/*" class="hidden" />
-            <img id="tracker-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/60" />
-          </div>
-          <button id="tracker-run-btn" class="w-full bg-primary/10 border border-primary text-primary px-4 py-3 font-mono text-sm uppercase tracking-wider hover:bg-primary/20 transition-all disabled:opacity-30" disabled>Run Tracker</button>
-        </div>
+<!-- ═══ TAB: YOLO ═══ -->
+<div class="tab-content hidden" id="tab-yolo">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div class="lg:col-span-4 glass p-5">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="text-[var(--neon)] text-sm">◈</span>
+        <span class="section-title">YOLO Control Panel</span>
       </div>
-      <div class="lg:col-span-8">
-        <div id="tracker-results-placeholder" class="glass border border-outline-variant/30 p-8 text-center h-full flex flex-col items-center justify-center">
-          <span class="material-symbols-outlined text-outline text-5xl mb-4">track_changes</span>
-          <p class="font-mono text-sm text-outline uppercase">Select a tracker and upload an image</p>
+      <div class="space-y-4">
+        <div>
+          <label class="section-title block mb-2" style="font-size:9px">> Model Architecture</label>
+          <select id="yolo-model-select" class="w-full bg-black border border-[rgba(0,255,65,.2)] text-[#c8d6c0] p-3 text-xs outline-none focus:border-[var(--neon)]" style="font-family:inherit"></select>
         </div>
-        <div id="tracker-results" class="hidden space-y-4">
-          <div class="glass border border-outline-variant/30 p-4"><img id="tracker-annotated" class="w-full rounded"/></div>
-          <div class="glass border border-outline-variant/30 p-4">
-            <h4 class="font-mono text-xs text-outline uppercase tracking-widest mb-3">Tracked Objects</h4>
-            <div class="overflow-x-auto"><table class="w-full text-xs font-mono"><thead><tr class="text-outline border-b border-outline-variant/30"><th class="text-left py-2">#</th><th class="text-left py-2">Label</th><th class="text-left py-2">Confidence</th></tr></thead><tbody id="tracker-detection-table"></tbody></table></div>
-          </div>
+        <div class="drop-zone bg-[rgba(0,255,65,.02)] h-44 flex flex-col items-center justify-center gap-2 cursor-pointer relative overflow-hidden" id="yolo-drop-area">
+          <span class="text-2xl text-[#c8d6c040]">⊞</span>
+          <p class="text-[10px] text-[#c8d6c060] tracking-[.2em] uppercase">Load Frame</p>
+          <input type="file" id="yolo-file-input" accept="image/*" class="hidden" />
+          <img id="yolo-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/80" />
+        </div>
+        <button id="yolo-detect-btn" class="w-full bg-[rgba(0,255,65,.08)] border border-[var(--neon)] text-[var(--neon)] px-4 py-3 text-xs tracking-[.2em] uppercase hover:bg-[rgba(0,255,65,.15)] transition-all disabled:opacity-20" disabled>> Execute_Detection</button>
+        <div id="yolo-status" class="text-[10px] text-[#c8d6c060] text-center"></div>
+      </div>
+    </div>
+    <div class="lg:col-span-8">
+      <div id="yolo-results-placeholder" class="glass p-8 text-center h-full flex flex-col items-center justify-center">
+        <p class="text-xs text-[#c8d6c040] tracking-[.2em] uppercase">Awaiting Target Frame</p>
+      </div>
+      <div id="yolo-results" class="hidden space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="glass p-3"><img id="yolo-annotated" class="w-full"/><p class="section-title text-center mt-2" style="font-size:9px">├ Annotated</p></div>
+          <div class="glass p-3"><img id="yolo-heatmap" class="w-full"/><p class="section-title text-center mt-2" style="font-size:9px">├ SRM Heatmap</p></div>
+        </div>
+        <div class="glass p-4">
+          <p class="section-title mb-3" style="font-size:9px">├ Detections Log</p>
+          <div class="overflow-x-auto"><table class="w-full text-xs" style="border-collapse:collapse"><thead><tr class="text-[#c8d6c060]" style="border-bottom:1px solid rgba(0,255,65,.1)"><th class="text-left py-2 font-normal">#</th><th class="text-left py-2 font-normal">Label</th><th class="text-left py-2 font-normal">Confidence</th><th class="text-left py-2 font-normal">Box</th></tr></thead><tbody id="yolo-detection-table"></tbody></table></div>
+          <p class="text-[10px] text-[#c8d6c030] mt-3 italic">Labels are COCO class names (e.g. person, car, clock). Confidence = model certainty (0-100%). Higher = more reliable.</p>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ═══ TAB: METRICS ═══ -->
-  <div class="tab-content hidden" id="tab-metrics">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div class="lg:col-span-6 glass border border-outline-variant/30 p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <span class="material-symbols-outlined text-primary">monitoring</span>
-          <h2 class="font-mono text-primary text-lg uppercase">Model Performance</h2>
-        </div>
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div class="bg-surface-container border border-outline-variant/30 p-4">
-            <p class="text-[10px] text-outline uppercase font-mono tracking-wider">SVM AUC</p>
-            <p class="font-mono text-2xl text-primary font-bold" id="svm-auc">--</p>
-          </div>
-          <div class="bg-surface-container border border-outline-variant/30 p-4">
-            <p class="text-[10px] text-outline uppercase font-mono tracking-wider">SVM Accuracy</p>
-            <p class="font-mono text-2xl text-secondary font-bold" id="svm-acc">--</p>
-          </div>
-          <div class="bg-surface-container border border-outline-variant/30 p-4">
-            <p class="text-[10px] text-outline uppercase font-mono tracking-wider">URD AUC</p>
-            <p class="font-mono text-2xl text-primary font-bold" id="urd-auc">--</p>
-          </div>
-          <div class="bg-surface-container border border-outline-variant/30 p-4">
-            <p class="text-[10px] text-outline uppercase font-mono tracking-wider">URD Accuracy</p>
-            <p class="font-mono text-2xl text-secondary font-bold" id="urd-acc">--</p>
-          </div>
-        </div>
-        <div class="h-64"><canvas id="radar-chart"></canvas></div>
+<!-- ═══ TAB: FORENSICS ═══ -->
+<div class="tab-content hidden" id="tab-forensics">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div class="lg:col-span-4 glass p-5">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="text-[var(--neon)] text-sm">◈</span>
+        <span class="section-title">Forensic Toolkit</span>
       </div>
-      <div class="lg:col-span-6 glass border border-outline-variant/30 p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <span class="material-symbols-outlined text-primary">bar_chart</span>
-          <h2 class="font-mono text-primary text-lg uppercase">Per-Dataset Performance</h2>
+      <div class="flex gap-1 mb-4 flex-wrap">
+        <button class="forensic-tab-btn active px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[var(--neon)] text-[var(--neon)] bg-[rgba(0,255,65,.06)] transition-all" data-method="ela">[ELA]</button>
+        <button class="forensic-tab-btn px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[rgba(0,255,65,.15)] text-[#c8d6c060] hover:border-[var(--neon)] transition-all" data-method="ocr">[OCR]</button>
+        <button class="forensic-tab-btn px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[rgba(0,255,65,.15)] text-[#c8d6c060] hover:border-[var(--neon)] transition-all" data-method="gan">[GAN]</button>
+        <button class="forensic-tab-btn px-3 py-2 text-[10px] tracking-[.15em] uppercase border border-[rgba(0,255,65,.15)] text-[#c8d6c060] hover:border-[var(--neon)] transition-all" data-method="full">[ALL-IN-1]</button>
+      </div>
+      <div class="drop-zone bg-[rgba(0,255,65,.02)] h-44 flex flex-col items-center justify-center gap-2 cursor-pointer relative overflow-hidden" id="forensic-drop-area">
+        <span class="text-2xl text-[#c8d6c040]">⊞</span>
+        <p class="text-[10px] text-[#c8d6c060] tracking-[.2em] uppercase">Load Sample</p>
+        <input type="file" id="forensic-file-input" accept="image/*" class="hidden" />
+        <img id="forensic-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/80" />
+      </div>
+      <button id="forensic-run-btn" class="w-full bg-[rgba(0,255,65,.08)] border border-[var(--neon)] text-[var(--neon)] px-4 py-3 text-xs tracking-[.2em] uppercase hover:bg-[rgba(0,255,65,.15)] transition-all mt-4 disabled:opacity-20" disabled>> Execute_Forensic_Scan</button>
+      <div id="forensic-status" class="text-[10px] text-[#c8d6c060] text-center mt-2"></div>
+    </div>
+    <div class="lg:col-span-8">
+      <div id="forensic-results-placeholder" class="glass p-8 text-center h-full flex flex-col items-center justify-center">
+        <p class="text-xs text-[#c8d6c040] tracking-[.2em] uppercase">Select Module &amp; Upload Target</p>
+      </div>
+      <div id="forensic-results" class="hidden space-y-3">
+        <div class="glass p-4">
+          <p class="section-title mb-3" style="font-size:9px">├ Scan Results</p>
+          <div id="forensic-human" class="space-y-2"></div>
+          <details class="mt-3">
+            <summary class="text-[10px] text-[#c8d6c040] cursor-pointer hover:text-[#c8d6c060]">[Raw JSON]</summary>
+            <pre id="forensic-json" class="text-[10px] text-[#c8d6c060] max-h-48 overflow-y-auto mt-2 p-2 bg-black/50 whitespace-pre-wrap" style="font-family:inherit"></pre>
+          </details>
         </div>
-        <div class="h-64"><canvas id="dataset-bar-chart"></canvas></div>
-        <div class="mt-6">
-          <h4 class="font-mono text-xs text-outline uppercase tracking-widest mb-3">Dataset Scores</h4>
-          <div class="max-h-48 overflow-y-auto terminal-scroll space-y-2" id="per-dataset-list"></div>
+        <div id="forensic-images" class="grid grid-cols-2 gap-4"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB: TRACKER ═══ -->
+<div class="tab-content hidden" id="tab-tracker">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div class="lg:col-span-4 glass p-5">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="text-[var(--neon)] text-sm">◈</span>
+        <span class="section-title">Object Tracker</span>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="section-title block mb-2" style="font-size:9px">> Algorithm</label>
+          <select id="tracker-select" class="w-full bg-black border border-[rgba(0,255,65,.2)] text-[#c8d6c0] p-3 text-xs outline-none focus:border-[var(--neon)]" style="font-family:inherit"></select>
         </div>
-        <div class="mt-6 text-center">
-          <img id="animated-gif" src="" alt="Animated Metrics" class="max-w-full rounded mx-auto border border-outline-variant/30" />
+        <div class="drop-zone bg-[rgba(0,255,65,.02)] h-44 flex flex-col items-center justify-center gap-2 cursor-pointer relative overflow-hidden" id="tracker-drop-area">
+          <span class="text-2xl text-[#c8d6c040]">⊞</span>
+          <p class="text-[10px] text-[#c8d6c060] tracking-[.2em] uppercase">Load Frame</p>
+          <input type="file" id="tracker-file-input" accept="image/*" class="hidden" />
+          <img id="tracker-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black/80" />
+        </div>
+        <button id="tracker-run-btn" class="w-full bg-[rgba(0,255,65,.08)] border border-[var(--neon)] text-[var(--neon)] px-4 py-3 text-xs tracking-[.2em] uppercase hover:bg-[rgba(0,255,65,.15)] transition-all disabled:opacity-20" disabled>> Execute_Tracking</button>
+      </div>
+    </div>
+    <div class="lg:col-span-8">
+      <div id="tracker-results-placeholder" class="glass p-8 text-center h-full flex flex-col items-center justify-center">
+        <p class="text-xs text-[#c8d6c040] tracking-[.2em] uppercase">Select Tracker &amp; Load Frame</p>
+      </div>
+      <div id="tracker-results" class="hidden space-y-4">
+        <div class="glass p-3"><img id="tracker-annotated" class="w-full"/></div>
+        <div class="glass p-4">
+          <p class="section-title mb-3" style="font-size:9px">├ Tracked Objects</p>
+          <div class="overflow-x-auto"><table class="w-full text-xs" style="border-collapse:collapse"><thead><tr class="text-[#c8d6c060]" style="border-bottom:1px solid rgba(0,255,65,.1)"><th class="text-left py-2 font-normal">#</th><th class="text-left py-2 font-normal">Label</th><th class="text-left py-2 font-normal">Confidence</th></tr></thead><tbody id="tracker-detection-table"></tbody></table></div>
         </div>
       </div>
     </div>
   </div>
+</div>
+
+<!-- ═══ TAB: METRICS ═══ -->
+<div class="tab-content hidden" id="tab-metrics">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div class="lg:col-span-6 glass p-5">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="text-[var(--neon)] text-sm">◈</span>
+        <span class="section-title">Model Performance Matrix</span>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <div class="bg-black/60 border border-[rgba(0,255,65,.12)] p-3"><p class="section-title mb-1" style="font-size:9px">SVM AUC</p><p class="text-lg font-bold" id="svm-auc">--</p></div>
+        <div class="bg-black/60 border border-[rgba(0,255,65,.12)] p-3"><p class="section-title mb-1" style="font-size:9px">SVM Accuracy</p><p class="text-lg font-bold cyber" id="svm-acc">--</p></div>
+        <div class="bg-black/60 border border-[rgba(0,255,65,.12)] p-3"><p class="section-title mb-1" style="font-size:9px">URD AUC</p><p class="text-lg font-bold" id="urd-auc">--</p></div>
+        <div class="bg-black/60 border border-[rgba(0,255,65,.12)] p-3"><p class="section-title mb-1" style="font-size:9px">URD Accuracy</p><p class="text-lg font-bold cyber" id="urd-acc">--</p></div>
+      </div>
+      <div class="h-64"><canvas id="radar-chart"></canvas></div>
+    </div>
+    <div class="lg:col-span-6 glass p-5">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="text-[var(--neon)] text-sm">◈</span>
+        <span class="section-title">Per-Dataset Benchmark</span>
+      </div>
+      <div class="h-64"><canvas id="dataset-bar-chart"></canvas></div>
+      <div class="mt-5">
+        <p class="section-title mb-3" style="font-size:9px">├ Dataset Scores</p>
+        <div class="max-h-40 overflow-y-auto space-y-1" id="per-dataset-list"></div>
+      </div>
+      <div class="mt-5">
+        <img id="animated-gif" src="" alt="" class="w-full rounded border border-[rgba(0,255,65,.1)]" />
+      </div>
+    </div>
+  </div>
+</div>
 
 </main>
 
-<!-- Footer -->
-<footer class="border-t border-outline-variant/30 py-6 mt-12 text-center glass">
-  <p class="font-mono text-[10px] text-outline uppercase tracking-[.3em]">SteganoScan Neural Forensics Suite v4.2</p>
-  <p class="font-mono text-[10px] text-outline/30 mt-1">Steganalysis · YOLO Detection · OCR · ELA · GAN Forensics · Multi-Tracker</p>
+<footer class="border-t border-[rgba(0,255,65,.1)] py-4 mt-8 text-center glass">
+  <p class="text-[9px] text-[#c8d6c040] tracking-[.3em] uppercase">SteganoScan Neural Forensics Terminal v4.2 /* Steganalysis · YOLO · OCR · ELA · GAN · Multi-Tracker */</p>
 </footer>
 
 <script>
-// ── Particle Background ──
-const canvas = document.getElementById('particle-bg');
-const ctx = canvas.getContext('2d');
-let particles = [];
-function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-window.addEventListener('resize', resizeCanvas); resizeCanvas();
-
-class Particle {
-  constructor() { this.reset(); }
-  reset() {
-    this.x = Math.random() * canvas.width;
-    this.y = Math.random() * canvas.height;
-    this.size = Math.random() * 2 + 0.5;
-    this.speedX = (Math.random() - 0.5) * 0.5;
-    this.speedY = (Math.random() - 0.5) * 0.5;
-    this.opacity = Math.random() * 0.5 + 0.1;
-    this.hue = Math.random() > 0.7 ? 140 : 120;
-  }
-  update() {
-    this.x += this.speedX; this.y += this.speedY;
-    if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
-  }
-  draw() {
-    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${this.hue}, 100%, 45%, ${this.opacity})`;
-    ctx.fill();
-  }
+// ══════════════════════════════════════════════════════════════════════
+// MATRIX RAIN
+// ══════════════════════════════════════════════════════════════════════
+const mCanvas = document.getElementById('matrix-canvas');
+const mCtx = mCanvas.getContext('2d');
+let mCols, mDrops;
+function initMatrix() {
+  mCanvas.width = window.innerWidth; mCanvas.height = window.innerHeight;
+  mCols = Math.floor(mCanvas.width / 14);
+  mDrops = Array(mCols).fill(1);
 }
-for (let i = 0; i < 80; i++) particles.push(new Particle());
-
-function animateParticles() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  particles.forEach(p => { p.update(); p.draw(); });
-  // connections
-  for (let i = 0; i < particles.length; i++) {
-    for (let j = i + 1; j < particles.length; j++) {
-      const dx = particles[i].x - particles[j].x;
-      const dy = particles[i].y - particles[j].y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 150) {
-        ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y);
-        ctx.strokeStyle = `rgba(0, 230, 57, ${0.08 * (1 - dist / 150)})`;
-        ctx.lineWidth = 0.5; ctx.stroke();
-      }
-    }
+window.addEventListener('resize', initMatrix); initMatrix();
+const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>/{}[]|&^%$#@!';
+function drawMatrix() {
+  mCtx.fillStyle = 'rgba(10,10,10,0.05)'; mCtx.fillRect(0,0,mCanvas.width,mCanvas.height);
+  mCtx.fillStyle = '#00ff41'; mCtx.font = '12px monospace';
+  for(let i=0; i<mDrops.length; i++){
+    const txt = chars[Math.floor(Math.random()*chars.length)];
+    mCtx.fillStyle = Math.random() > 0.98 ? '#ccffcc' : '#00ff41';
+    mCtx.fillText(txt, i*14, mDrops[i]*14);
+    if(mDrops[i]*14 > mCanvas.height && Math.random() > 0.975) mDrops[i]=0;
+    mDrops[i]++;
   }
-  requestAnimationFrame(animateParticles);
+  requestAnimationFrame(drawMatrix);
 }
-animateParticles();
+drawMatrix();
 
-// ── Tab System ──
+// ══════════════════════════════════════════════════════════════════════
+// TAB SYSTEM
+// ══════════════════════════════════════════════════════════════════════
 document.querySelectorAll('#tabs .tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#tabs .tab-btn').forEach(b => b.classList.remove('active'));
@@ -417,445 +375,297 @@ document.querySelectorAll('#tabs .tab-btn').forEach(btn => {
   });
 });
 
-// ── Gauge Drawing ──
+// ══════════════════════════════════════════════════════════════════════
+// GAUGE
+// ══════════════════════════════════════════════════════════════════════
 function drawGauge(value, isThreat) {
-  const c = document.getElementById('gauge-canvas');
-  if (!c) return;
-  const ctx = c.getContext('2d');
-  const w = c.width, h = c.height, cx = w/2, cy = h/2, r = 40;
-  ctx.clearRect(0, 0, w, h);
-  // Background arc
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0.75 * Math.PI, 2.25 * Math.PI);
-  ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke();
-  // Value arc
-  const endAngle = 0.75 * Math.PI + (value / 100) * 1.5 * Math.PI;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0.75 * Math.PI, endAngle);
-  ctx.strokeStyle = isThreat ? '#ffb4ab' : '#00e639';
-  ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke();
-  // Glow
-  ctx.shadowColor = isThreat ? '#ffb4ab' : '#00e639';
-  ctx.shadowBlur = 15;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0.75 * Math.PI, endAngle);
-  ctx.stroke(); ctx.shadowBlur = 0;
-  // Center dot
-  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-  ctx.fillStyle = isThreat ? '#ffb4ab' : '#00e639'; ctx.fill();
+  const c = document.getElementById('gauge-canvas'); if(!c) return;
+  const cx = c.getContext('2d'), w=c.width, h=c.height, x=w/2, y=h/2, r=35;
+  cx.clearRect(0,0,w,h);
+  cx.beginPath(); cx.arc(x,y,r,0.75*Math.PI,2.25*Math.PI);
+  cx.strokeStyle='#1a1a1a'; cx.lineWidth=6; cx.lineCap='round'; cx.stroke();
+  const end=0.75*Math.PI+(value/100)*1.5*Math.PI;
+  cx.beginPath(); cx.arc(x,y,r,0.75*Math.PI,end);
+  cx.strokeStyle=isThreat?'#ff3355':'#00ff41'; cx.lineWidth=6; cx.lineCap='round'; cx.stroke();
+  cx.shadowColor=isThreat?'#ff3355':'#00ff41'; cx.shadowBlur=12;
+  cx.beginPath(); cx.arc(x,y,r,0.75*Math.PI,end); cx.stroke(); cx.shadowBlur=0;
+  cx.beginPath(); cx.arc(x,y,2,0,Math.PI*2); cx.fillStyle=isThreat?'#ff3355':'#00ff41'; cx.fill();
 }
 
-// ── Terminal Logger ──
-function log(msg) {
-  const el = document.getElementById('terminal-log');
-  if (!el) return;
-  const t = document.createElement('div');
-  t.innerHTML = `<span class="text-outline">$</span> ${msg}`;
-  el.appendChild(t);
-  el.scrollTop = el.scrollHeight;
+// ══════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════
+function log(msg){const el=document.getElementById('terminal-log');if(!el)return;const d=document.createElement('div');d.textContent='> '+msg;el.appendChild(d);el.scrollTop=el.scrollHeight}
+function readFile(file){return new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(file)})}
+function setupDrop(dropId,fileId,prevId,cb){
+  const da=document.getElementById(dropId), fi=document.getElementById(fileId), pv=document.getElementById(prevId);
+  if(!da||!fi)return;
+  da.addEventListener('click',()=>fi.click());
+  da.addEventListener('dragover',e=>{e.preventDefault();da.classList.add('dragover')});
+  da.addEventListener('dragleave',()=>da.classList.remove('dragover'));
+  da.addEventListener('drop',e=>{e.preventDefault();da.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))h(f)});
+  fi.addEventListener('change',()=>{if(fi.files[0])h(fi.files[0])});
+  function h(file){readFile(file).then(u=>{if(pv){pv.src=u;pv.classList.remove('hidden')}if(cb)cb(file)})}
 }
 
-// ── File Handling ──
-function readFile(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.readAsDataURL(file);
-  });
-}
-
-function setupDropZone(dropAreaId, fileInputId, previewId, callback) {
-  const dropArea = document.getElementById(dropAreaId);
-  const fileInput = document.getElementById(fileInputId);
-  const preview = document.getElementById(previewId);
-  if (!dropArea || !fileInput) return;
-
-  dropArea.addEventListener('click', () => fileInput.click());
-  dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('dragover'); });
-  dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
-  dropArea.addEventListener('drop', (e) => {
-    e.preventDefault(); dropArea.classList.remove('dragover');
-    const f = e.dataTransfer.files[0];
-    if (f && f.type.startsWith('image/')) handleDropFile(f);
-  });
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) handleDropFile(fileInput.files[0]);
-  });
-
-  function handleDropFile(file) {
-    readFile(file).then(url => {
-      if (preview) { preview.src = url; preview.classList.remove('hidden'); }
-      if (callback) callback(file);
-    });
-  }
-}
-
-// ── Main Scan ──
-const mainFileInput = document.getElementById('file-input');
-const mainDropArea = document.getElementById('drop-area');
-const mainPreview = document.getElementById('image-preview');
+// ══════════════════════════════════════════════════════════════════════
+// SCAN TAB
+// ══════════════════════════════════════════════════════════════════════
 let currentScanFile = null;
-
-mainDropArea.addEventListener('click', () => mainFileInput.click());
-mainDropArea.addEventListener('dragover', (e) => { e.preventDefault(); mainDropArea.classList.add('dragover'); });
-mainDropArea.addEventListener('dragleave', () => mainDropArea.classList.remove('dragover'));
-mainDropArea.addEventListener('drop', (e) => {
-  e.preventDefault(); mainDropArea.classList.remove('dragover');
-  const f = e.dataTransfer.files[0];
-  if (f && f.type.startsWith('image/')) handleMainFile(f);
-});
-mainFileInput.addEventListener('change', () => { if (mainFileInput.files[0]) handleMainFile(mainFileInput.files[0]); });
-
-function handleMainFile(file) {
-  currentScanFile = file;
-  readFile(file).then(url => {
-    mainPreview.src = url; mainPreview.classList.remove('hidden');
-  });
-  predictImage(file);
-}
+setupDrop('drop-area','file-input','image-preview',f=>{currentScanFile=f;predictImage(f)});
 
 async function predictImage(file) {
-  const formData = new FormData(); formData.append('image', file);
+  const fd = new FormData(); fd.append('image', file);
   document.getElementById('results-placeholder').classList.add('hidden');
   document.getElementById('results-section').classList.remove('hidden');
-  document.getElementById('verdict-text').textContent = 'Analyzing';
-  document.getElementById('verdict-icon').textContent = 'radar';
-  document.getElementById('verdict-icon').className = 'material-symbols-outlined text-3xl animate-spin';
-  document.getElementById('kernel-status').textContent = 'ANALYZING';
-  document.getElementById('kernel-led').style.background = '#ffb4ab';
+  document.getElementById('verdict-text').textContent = 'ANALYZING'; document.getElementById('verdict-icon').textContent = '◌';
+  document.getElementById('kernel-status').textContent = 'SCANNING'; document.getElementById('kernel-led').className = 'status-dot warn animate-pulse-glow';
   log('Initiating neural scan...');
-
   try {
-    const r = await fetch('/api/predict', { method: 'POST', body: formData });
+    const r = await fetch('/api/predict', {method:'POST',body:fd});
     const data = await r.json();
-    if (!data.success) { log('Error: ' + (data.error || 'Unknown')); return; }
-
-    const res = data.results;
-    const modelKey = res.urd ? 'urd' : (res.robust_svm ? 'robust_svm' : null);
-    if (!modelKey) { log('No model results'); return; }
-    const pred = res[modelKey];
-    const isStego = pred.prediction === 'STEGO';
-
-    // Gauge
+    if (!data.success) { log('ERR: '+(data.error||'?')); return; }
+    const res = data.results, mk = res.urd?'urd':(res.robust_svm?'robust_svm':null);
+    if (!mk) return;
+    const pred = res[mk], isStego = pred.prediction==='STEGO';
     drawGauge(pred.confidence, isStego);
-    document.getElementById('gauge-value').textContent = pred.confidence + '%';
-    // Verdict
-    document.getElementById('verdict-text').textContent = isStego ? 'Threat Detected' : 'Clean';
-    document.getElementById('verdict-text').className = 'font-mono text-2xl font-bold uppercase tracking-tighter ' + (isStego ? 'text-error' : 'text-primary');
-    document.getElementById('verdict-icon').textContent = isStego ? 'warning' : 'verified';
-    document.getElementById('verdict-icon').className = 'material-symbols-outlined text-3xl ' + (isStego ? 'text-error' : 'text-primary');
-    document.getElementById('prediction-prob').textContent = 'P(stego) = ' + pred.probability.toFixed(4) + ' | threshold = ' + pred.threshold;
-    document.getElementById('inference-time').textContent = 'Inference: ' + (data.inference_time * 1000).toFixed(0) + 'ms';
-    document.getElementById('model-used').textContent = 'Model: ' + modelKey;
-
-    // Stats
-    document.getElementById('stat-chi2').textContent = (pred.probability * 0.942).toFixed(3);
-    document.getElementById('bar-chi2').style.width = (pred.probability * 94.2).toFixed(0) + '%';
-    document.getElementById('stat-rs').textContent = (pred.probability * 1.2).toFixed(1) + '%';
-    document.getElementById('bar-rs').style.width = (pred.probability * 12).toFixed(0) + '%';
-    document.getElementById('metric-entropy').textContent = (7.9 + (isStego ? 0.0982 : -0.05) + Math.random() * 0.02).toFixed(4);
-    document.getElementById('metric-lsb').textContent = isStego ? (0.842 - Math.random() * 0.1).toFixed(3) : (0.5 + Math.random() * 0.05).toFixed(3);
-
-    // Noise bars
-    const noiseBars = document.getElementById('noise-bars').children;
-    for (let i = 0; i < 7; i++) { const h = 20 + Math.random() * 75; if (noiseBars[i]) noiseBars[i].style.height = h + '%'; }
-
-    log(`Scan complete: ${pred.prediction} (confidence ${pred.confidence}%)`);
-    document.getElementById('kernel-status').textContent = 'ONLINE';
-    document.getElementById('kernel-led').style.background = '#00e639';
-  } catch(e) {
-    log('Network error: ' + e.message);
-    document.getElementById('kernel-status').textContent = 'ERROR';
-    document.getElementById('kernel-led').style.background = '#ffb4ab';
-  }
+    document.getElementById('gauge-value').textContent = pred.confidence+'%';
+    document.getElementById('verdict-text').textContent = isStego?'⚠ THREAT DETECTED':'✓ CLEAN';
+    document.getElementById('verdict-text').className = 'font-bold text-base uppercase tracking-tight '+(isStego?'red':'neon');
+    document.getElementById('verdict-icon').textContent = isStego?'⚠':'✓';
+    document.getElementById('verdict-icon').className = 'text-lg '+(isStego?'red':'neon');
+    document.getElementById('prediction-prob').textContent = 'P(stego) = '+pred.probability.toFixed(4)+' | threshold = '+pred.threshold;
+    document.getElementById('inference-time').textContent = 'INFERENCE: '+(data.inference_time*1000).toFixed(0)+'ms';
+    document.getElementById('model-used').textContent = 'MODEL: '+mk;
+    document.getElementById('stat-chi2').textContent = (pred.probability*0.942).toFixed(3);
+    document.getElementById('bar-chi2').style.width = (pred.probability*94.2).toFixed(0)+'%';
+    document.getElementById('stat-rs').textContent = (pred.probability*1.2).toFixed(1)+'%';
+    document.getElementById('bar-rs').style.width = (pred.probability*12).toFixed(0)+'%';
+    document.getElementById('metric-entropy').textContent = (7.9+(isStego?0.0982:-0.05)+Math.random()*0.02).toFixed(4);
+    document.getElementById('metric-lsb').textContent = isStego?(0.842-Math.random()*0.1).toFixed(3):(0.5+Math.random()*0.05).toFixed(3);
+    const nb = document.getElementById('noise-bars').children;
+    for(let i=0;i<7;i++){const h=20+Math.random()*75;if(nb[i])nb[i].style.height=h+'%'}
+    log('SCAN COMPLETE: '+pred.prediction+' ('+pred.confidence+'%)');
+    document.getElementById('kernel-status').textContent='ONLINE';document.getElementById('kernel-led').className='status-dot on animate-pulse-glow';
+  } catch(e) { log('NETWORK ERR: '+e.message); document.getElementById('kernel-status').textContent='ERR'; document.getElementById('kernel-led').className='status-dot off'; }
 }
 
-// ── YOLO Tab ──
-let currentYoloFile = null;
-setupDropZone('yolo-drop-area', 'yolo-file-input', 'yolo-preview', (f) => {
-  currentYoloFile = f;
-  document.getElementById('yolo-detect-btn').disabled = false;
-  document.getElementById('yolo-status').textContent = 'Ready';
-});
-
-async function loadYoloModels() {
-  try {
-    const r = await fetch('/api/yolo/models');
-    const data = await r.json();
-    const sel = document.getElementById('yolo-model-select');
-    sel.innerHTML = '';
-    data.models.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.name; opt.textContent = `${m.name} (${m.params}M params)`;
-      if (m.active) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  } catch(e) { console.log('YOLO models fetch failed'); }
-}
+// ══════════════════════════════════════════════════════════════════════
+// YOLO TAB
+// ══════════════════════════════════════════════════════════════════════
+let yoloFile=null;
+setupDrop('yolo-drop-area','yolo-file-input','yolo-preview',f=>{yoloFile=f;document.getElementById('yolo-detect-btn').disabled=false;document.getElementById('yolo-status').textContent='[READY]'});
+async function loadYoloModels(){try{const r=await fetch('/api/yolo/models');const d=await r.json();const s=document.getElementById('yolo-model-select');s.innerHTML='';Object.entries(d.models).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=k+(d.active===k?' [ACTIVE]':'');if(d.active===k)o.selected=true;s.appendChild(o)})}catch(e){console.log(e)}}
 loadYoloModels();
-
-document.getElementById('yolo-detect-btn').addEventListener('click', async () => {
-  if (!currentYoloFile) return;
-  const btn = document.getElementById('yolo-detect-btn');
-  btn.disabled = true; btn.textContent = 'Detecting...';
-  document.getElementById('yolo-status').textContent = 'Running detection...';
-
-  const formData = new FormData();
-  formData.append('image', currentYoloFile);
-  const modelName = document.getElementById('yolo-model-select').value;
-  if (modelName) {
-    await fetch('/api/yolo/switch', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({model: modelName}) });
-  }
-
-  try {
-    const r = await fetch('/api/yolo/detect', { method: 'POST', body: formData });
-    const data = await r.json();
-    if (!data.success) { document.getElementById('yolo-status').textContent = 'Error: ' + (data.error || ''); btn.disabled = false; btn.textContent = 'Run Detection'; return; }
-
-    document.getElementById('yolo-results-placeholder').classList.add('hidden');
-    document.getElementById('yolo-results').classList.remove('hidden');
-    document.getElementById('yolo-annotated').src = data.annotated_image;
-    document.getElementById('yolo-heatmap').src = data.heatmap_image;
-
-    const table = document.getElementById('yolo-detection-table');
-    table.innerHTML = '';
-    data.detections.forEach((d, i) => {
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-outline-variant/20';
-      tr.innerHTML = `<td class="py-2 text-outline">${i+1}</td><td class="py-2 text-primary">${d.label}</td><td class="py-2">${(d.confidence*100).toFixed(1)}%</td><td class="py-2 text-outline">[${d.box.map(v=>Math.round(v)).join(', ')}]</td>`;
-      table.appendChild(tr);
-    });
-    document.getElementById('yolo-status').textContent = `Found ${data.detections.length} objects`;
-  } catch(e) {
-    document.getElementById('yolo-status').textContent = 'Error: ' + e.message;
-  }
-  btn.disabled = false; btn.textContent = 'Run Detection';
+document.getElementById('yolo-detect-btn').addEventListener('click',async()=>{
+  if(!yoloFile)return;const btn=document.getElementById('yolo-detect-btn');btn.disabled=true;btn.textContent='> PROCESSING...';
+  document.getElementById('yolo-status').textContent='[DETECTING]';
+  const fd=new FormData();fd.append('image',yoloFile);
+  const mn=document.getElementById('yolo-model-select').value;
+  if(mn)await fetch('/api/yolo/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:mn})});
+  try{
+    const r=await fetch('/api/yolo/detect',{method:'POST',body:fd});const data=await r.json();
+    if(!data.success){document.getElementById('yolo-status').textContent='ERR: '+(data.error||'');btn.disabled=false;btn.textContent='> Execute_Detection';return}
+    document.getElementById('yolo-results-placeholder').classList.add('hidden');document.getElementById('yolo-results').classList.remove('hidden');
+    document.getElementById('yolo-annotated').src=data.annotated_image;document.getElementById('yolo-heatmap').src=data.heatmap_image;
+    const t=document.getElementById('yolo-detection-table');t.innerHTML='';
+    data.detections.forEach((d,i)=>{const tr=document.createElement('tr');tr.style.borderBottom='1px solid rgba(0,255,65,.06)';
+      tr.innerHTML='<td class="py-2 text-[#c8d6c060]">'+(i+1)+'</td><td class="py-2 neon">'+d.label+'</td><td class="py-2">'+(d.confidence*100).toFixed(1)+'%</td><td class="py-2 text-[#c8d6c060]">['+d.box.map(v=>Math.round(v)).join(',')+']</td>';t.appendChild(tr)});
+    document.getElementById('yolo-status').textContent='[DETECTED '+data.detections.length+' OBJECTS]';
+  }catch(e){document.getElementById('yolo-status').textContent='ERR: '+e.message}
+  btn.disabled=false;btn.textContent='> Execute_Detection';
 });
 
-// ── Forensics Tab ──
-let currentForensicFile = null;
-let currentForensicMethod = 'ela';
-setupDropZone('forensic-drop-area', 'forensic-file-input', 'forensic-preview', (f) => {
-  currentForensicFile = f;
-  document.getElementById('forensic-run-btn').disabled = false;
-});
-
-document.querySelectorAll('.forensic-tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.forensic-tab-btn').forEach(b => {
-      b.classList.remove('active');
-      b.className = b.className.replace('border-primary text-primary bg-primary/10', 'border-outline-variant/50 text-outline');
-    });
-    btn.classList.add('active');
-    btn.className = btn.className.replace('border-outline-variant/50 text-outline', 'border-primary text-primary bg-primary/10');
-    currentForensicMethod = btn.dataset.method;
+// ══════════════════════════════════════════════════════════════════════
+// FORENSICS TAB — HUMAN READABLE OUTPUT
+// ══════════════════════════════════════════════════════════════════════
+let forensicFile=null, forensicMethod='ela';
+setupDrop('forensic-drop-area','forensic-file-input','forensic-preview',f=>{forensicFile=f;document.getElementById('forensic-run-btn').disabled=false});
+document.querySelectorAll('.forensic-tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.forensic-tab-btn').forEach(b=>{b.classList.remove('active');b.className=b.className.replace(/border-\[var\(--neon\)\] text-\[var\(--neon\)\] bg-\[rgba\(0,255,65,\.06\)\]/,'border-[rgba(0,255,65,.15)] text-[#c8d6c060]')});
+    btn.classList.add('active');btn.className=btn.className.replace(/border-\[rgba\(0,255,65,\.15\)\] text-\[\#c8d6c060\]/,'border-[var(--neon)] text-[var(--neon)] bg-[rgba(0,255,65,.06)]');
+    forensicMethod=btn.dataset.method;
   });
 });
 
+function typeText(el, text, speed, color) {
+  let i = 0; el.innerHTML = ''; el.style.color = color || 'var(--neon)';
+  function tick() { if (i < text.length) { el.innerHTML += text[i++]; setTimeout(tick, speed); } }
+  tick();
+}
+
+function renderForensicHuman(data, method) {
+  const el = document.getElementById('forensic-human');
+  el.innerHTML = '';
+  if (!data) { el.innerHTML = '<div class="text-[#c8d6c060] text-xs glitch" data-text="[NO DATA]">[NO DATA]</div>'; return; }
+  let rowIdx = 0;
+  const addRow = (label, val, color, pct) => {
+    const d=document.createElement('div');d.className='data-row scanline-enter';d.style.animationDelay=(rowIdx*80)+'ms';
+    const lblSpan=document.createElement('span');lblSpan.className='key';
+    typeText(lblSpan, label, 15+rowIdx*8);
+    const valSpan=document.createElement('span');valSpan.className='val';valSpan.style.color=color||'var(--neon)';
+    typeText(valSpan, val, 15+rowIdx*8, color||'var(--neon)');
+    d.appendChild(lblSpan); d.appendChild(valSpan);
+    if (pct != null) { const bar=document.createElement('div');bar.className='prob-bar';const fill=document.createElement('div');fill.className='prob-fill';fill.style.width=pct+'%';fill.style.background=pct>50?'var(--red)':'var(--cyan)';bar.appendChild(fill);d.appendChild(bar); }
+    el.appendChild(d); rowIdx++;
+  };
+
+  if (method === 'ela' && data.ela) {
+    addRow('> ', '', 'var(--amber)');
+    addRow('MODULE', 'Error Level Analysis [ELA]', 'var(--cyan)');
+    const r = data.ela;
+    const score = r.ela_score != null ? r.ela_score : 0;
+    addRow('ELA Score', (score*100).toFixed(1)+'%', score>0.3?'var(--red)':'var(--neon)', Math.round(score*100));
+    addRow('Mean Error', r.mean_error != null ? r.mean_error.toFixed(4) : '--');
+    addRow('Max Error', r.max_error != null ? r.max_error.toFixed(2) : '--');
+    addRow('Suspicious Ratio', r.suspicious_ratio != null ? (r.suspicious_ratio*100).toFixed(1)+'%' : '--');
+    addRow('Suspicious Regions', (r.num_suspicious_regions||0).toString());
+    const verdict = r.prediction || 'UNKNOWN';
+    addRow('VERDICT', verdict, verdict==='MANIPULATED'?'var(--red)':'var(--neon)');
+    addRow('ANALYSIS', verdict==='MANIPULATED' ? '!! JPEG artifacts indicate local tampering' : '>> Uniform compression — no tampering detected');
+  } else if (method === 'ocr' && data.ocr) {
+    addRow('> ', '', 'var(--amber)');
+    addRow('MODULE', 'Optical Character Recognition [OCR]', 'var(--cyan)');
+    const r = data.ocr;
+    addRow('Text Regions', (r.num_text_regions||0).toString());
+    addRow('Characters', (r.total_characters||0).toString());
+    if (r.detections && r.detections.length > 0) {
+      addRow('Samples', r.detections.slice(0,4).map(d => '\u00ab'+(d.text||d.label||'?')+'\u00bb').join(' ')+(r.detections.length>4?'...':''));
+    }
+    addRow('ANALYSIS', (r.num_text_regions||0) > 0 ? 'Text detected — may contain hidden data' : 'No text found');
+  } else if (method === 'gan' && data.gan) {
+    addRow('> ', '', 'var(--amber)');
+    addRow('MODULE', 'GAN / AI Image Detection', 'var(--cyan)');
+    const r = data.gan;
+    const isAI = r.prediction === 'AI_GENERATED';
+    addRow('CLASSIFICATION', isAI ? '!! AI-GENERATED' : '>> NATURAL <<', isAI?'var(--red)':'var(--neon)');
+    addRow('AI Probability', (r.probability*100).toFixed(1)+'%', r.probability>0.5?'var(--red)':'var(--neon)', Math.round(r.probability*100));
+    if (r.model_available && r.model_probability != null) {
+      addRow('ViT Confidence', (r.model_probability*100).toFixed(1)+'%', null, Math.round(r.model_probability*100));
+    }
+    addRow('Heuristic Score', (r.heuristic_probability*100).toFixed(1)+'%', null, Math.round(r.heuristic_probability*100));
+    const hf = r.frequency_analysis || {};
+    addRow('High-Freq Ratio', hf.hf_ratio != null ? (hf.hf_ratio*100).toFixed(1)+'%' : '--');
+    addRow('Spectral Entropy', hf.spectral_entropy != null ? hf.spectral_entropy.toFixed(2)+' bits' : '--');
+    const ns = r.noise_analysis || {};
+    addRow('Noise Correlation', ns.noise_correlation != null ? ns.noise_correlation.toFixed(4) : '--');
+    addRow('Noise Std Mean', ns.noise_std_mean != null ? ns.noise_std_mean.toFixed(2) : '--');
+    addRow('ANALYSIS', isAI ? '!! Frequency/noise patterns consistent with AI generation' : '>> Natural image characteristics detected');
+  } else if (method === 'full' && data.results) {
+    addRow('> ', '', 'var(--amber)');
+    addRow('FULL PIPELINE', 'Steganalysis + YOLO + Forensics', 'var(--cyan)');
+    const r = data.results;
+    if (r.steganalysis_urd) {
+      const s = r.steganalysis_urd;
+      addRow('Steganalysis', s.prediction+' ('+(s.probability*100).toFixed(1)+'%)', s.prediction==='STEGO'?'var(--red)':'var(--neon)', Math.round(s.probability*100));
+    }
+    if (r.steganalysis_svm) {
+      const s = r.steganalysis_svm;
+      addRow('Steganalysis [SVM]', s.prediction+' ('+(s.probability*100).toFixed(1)+'%)', s.prediction==='STEGO'?'var(--red)':'var(--neon)', Math.round(s.probability*100));
+    }
+    if (r.yolo_detections && r.yolo_detections.length > 0) {
+      addRow('YOLO Objects', r.yolo_detections.length+' detected');
+      r.yolo_detections.slice(0,4).forEach((d,i) => {
+        addRow('  ['+(i+1)+'] '+d.label, (d.confidence*100).toFixed(1)+'%'+(d.stego_prob?' stego:'+(d.stego_prob*100).toFixed(1)+'%':''), null, Math.round((d.confidence||0)*100));
+      });
+    } else {
+      addRow('YOLO Objects', 'None detected');
+    }
+    if (r.ela) addRow('ELA Tamper', (r.ela.ela_score*100).toFixed(1)+'%', r.ela.prediction==='MANIPULATED'?'var(--red)':'var(--neon)', Math.round((r.ela.ela_score||0)*100));
+    if (r.ocr) addRow('OCR Text', r.ocr.num_text_regions+' regions / '+r.ocr.total_characters+' chars');
+    if (r.gan) addRow('GAN Class', r.gan.prediction+' ('+(r.gan.probability*100).toFixed(1)+'%)', r.gan.prediction==='AI_GENERATED'?'var(--red)':'var(--neon)', Math.round((r.gan.probability||0)*100));
+    let threats = [];
+    if (r.steganalysis_urd && r.steganalysis_urd.prediction==='STEGO') threats.push('STEGANOGRAPHY');
+    if (r.gan && r.gan.prediction==='AI_GENERATED') threats.push('AI-GENERATED');
+    if (r.ela && r.ela.prediction==='MANIPULATED') threats.push('TAMPERING');
+    addRow('THREAT SUMMARY', threats.length > 0 ? threats.join(' | ') : 'NONE', threats.length > 0 ? 'var(--red)' : 'var(--neon)');
+  } else {
+    addRow('STATUS', 'Unexpected response format', 'var(--amber)');
+    document.getElementById('forensic-json').textContent = JSON.stringify(data, null, 2);
+  }
+}
+
 document.getElementById('forensic-run-btn').addEventListener('click', async () => {
-  if (!currentForensicFile) return;
-  const btn = document.getElementById('forensic-run-btn');
-  btn.disabled = true; btn.textContent = 'Scanning...';
-
-  const formData = new FormData();
-  formData.append('image', currentForensicFile);
-  const endpoint = currentForensicMethod === 'full' ? '/api/forensics/full' : `/api/forensics/${currentForensicMethod}`;
-
+  if (!forensicFile) return;
+  const btn = document.getElementById('forensic-run-btn'); btn.disabled = true; btn.textContent = '> PROCESSING...';
+  document.getElementById('forensic-status').textContent = '[SCANNING]';
+  const fd = new FormData(); fd.append('image', forensicFile);
+  const ep = forensicMethod === 'full' ? '/api/forensics/full' : '/api/forensics/'+forensicMethod;
   try {
-    const r = await fetch(endpoint, { method: 'POST', body: formData });
+    const r = await fetch(ep, {method:'POST',body:fd});
     const data = await r.json();
-    if (!data.success) { btn.disabled = false; btn.textContent = 'Run Forensic Scan'; return; }
-
+    if (!data.success) { document.getElementById('forensic-status').textContent = 'ERR: '+(data.error||''); btn.disabled=false; btn.textContent='> Execute_Forensic_Scan'; return; }
     document.getElementById('forensic-results-placeholder').classList.add('hidden');
     document.getElementById('forensic-results').classList.remove('hidden');
-
-    const key = currentForensicMethod === 'full' ? 'results' : currentForensicMethod;
-    const resultData = key === 'results' ? data[key] : data[key === currentForensicMethod ? currentForensicMethod : key];
-    document.getElementById('forensic-json').textContent = JSON.stringify(resultData || data, null, 2);
-
-    const imgContainer = document.getElementById('forensic-images');
-    imgContainer.innerHTML = '';
-    if (currentForensicMethod === 'ela' && data.ela && data.ela.ela_image) {
-      const div = document.createElement('div');
-      div.className = 'glass border border-outline-variant/30 p-2';
-      div.innerHTML = `<img src="${data.ela.ela_image}" class="w-full rounded"/><p class="font-mono text-[10px] text-outline text-center mt-1 uppercase">ELA Heatmap</p>`;
-      imgContainer.appendChild(div);
+    renderForensicHuman(data, forensicMethod);
+    document.getElementById('forensic-json').textContent = JSON.stringify(data, null, 2);
+    // Show images
+    const ic = document.getElementById('forensic-images'); ic.innerHTML = '';
+    const checkImg = (src, label) => { if (src) { const d=document.createElement('div');d.className='glass p-2';d.innerHTML='<img src="'+src+'" class="w-full"/><p class="section-title text-center mt-1" style="font-size:9px">├ '+label+'</p>';ic.appendChild(d) }};
+    if (forensicMethod === 'ela' && data.ela && data.ela.ela_image) checkImg(data.ela.ela_image, 'ELA Heatmap');
+    if (forensicMethod === 'ocr' && data.ocr && data.ocr.annotated_image) checkImg(data.ocr.annotated_image, 'Text Regions');
+    if (forensicMethod === 'full' && data.results) {
+      if (data.results.yolo_annotated) checkImg('data:image/png;base64,'+data.results.yolo_annotated, 'YOLO Annotated');
     }
-    if (currentForensicMethod === 'ocr' && data.ocr && data.ocr.annotated_image) {
-      const div = document.createElement('div');
-      div.className = 'glass border border-outline-variant/30 p-2';
-      div.innerHTML = `<img src="${data.ocr.annotated_image}" class="w-full rounded"/><p class="font-mono text-[10px] text-outline text-center mt-1 uppercase">Text Regions</p>`;
-      imgContainer.appendChild(div);
-    }
-  } catch(e) {
-    document.getElementById('forensic-json').textContent = 'Error: ' + e.message;
-  }
-  btn.disabled = false; btn.textContent = 'Run Forensic Scan';
+    document.getElementById('forensic-status').textContent = '[SCAN COMPLETE]';
+  } catch(e) { document.getElementById('forensic-json').textContent = 'NETWORK ERR: '+e.message; document.getElementById('forensic-status').textContent = '[ERROR]'; }
+  btn.disabled = false; btn.textContent = '> Execute_Forensic_Scan';
 });
 
-// ── Tracker Tab ──
-let currentTrackerFile = null;
-setupDropZone('tracker-drop-area', 'tracker-file-input', 'tracker-preview', (f) => {
-  currentTrackerFile = f;
-  document.getElementById('tracker-run-btn').disabled = false;
-});
-
-async function loadTrackers() {
-  try {
-    const r = await fetch('/api/tracker/list');
-    const data = await r.json();
-    const sel = document.getElementById('tracker-select');
-    sel.innerHTML = '';
-    data.trackers.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t; opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
-      if (t === data.active) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  } catch(e) { console.log('Tracker list fetch failed'); }
-}
+// ══════════════════════════════════════════════════════════════════════
+// TRACKER TAB
+// ══════════════════════════════════════════════════════════════════════
+let trackFile=null;
+setupDrop('tracker-drop-area','tracker-file-input','tracker-preview',f=>{trackFile=f;document.getElementById('tracker-run-btn').disabled=false});
+async function loadTrackers(){try{const r=await fetch('/api/tracker/list');const d=await r.json();const s=document.getElementById('tracker-select');s.innerHTML='';d.trackers.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t.charAt(0).toUpperCase()+t.slice(1)+(t===d.active?' [ACTIVE]':'');if(t===d.active)o.selected=true;s.appendChild(o)})}catch(e){}}
 loadTrackers();
-
-document.getElementById('tracker-run-btn').addEventListener('click', async () => {
-  if (!currentTrackerFile) return;
-  const btn = document.getElementById('tracker-run-btn');
-  btn.disabled = true; btn.textContent = 'Tracking...';
-
-  const formData = new FormData();
-  formData.append('image', currentTrackerFile);
-  const trackerName = document.getElementById('tracker-select').value;
-
-  // Select tracker
-  await fetch('/api/tracker/select', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({tracker: trackerName}) });
-
-  try {
-    const r = await fetch('/api/tracker/track', { method: 'POST', body: formData });
-    const data = await r.json();
-    if (!data.success) { btn.disabled = false; btn.textContent = 'Run Tracker'; return; }
-
-    document.getElementById('tracker-results-placeholder').classList.add('hidden');
-    document.getElementById('tracker-results').classList.remove('hidden');
-    if (data.annotated_image) document.getElementById('tracker-annotated').src = data.annotated_image;
-
-    const table = document.getElementById('tracker-detection-table');
-    table.innerHTML = '';
-    data.detections.forEach((d, i) => {
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-outline-variant/20';
-      tr.innerHTML = `<td class="py-2 text-outline">${i+1}</td><td class="py-2 text-primary">${d.label}</td><td class="py-2">${(d.confidence*100).toFixed(1)}%</td>`;
-      table.appendChild(tr);
-    });
-  } catch(e) {
-    console.log('Tracker error:', e);
-  }
-  btn.disabled = false; btn.textContent = 'Run Tracker';
+document.getElementById('tracker-run-btn').addEventListener('click',async()=>{
+  if(!trackFile)return;const btn=document.getElementById('tracker-run-btn');btn.disabled=true;btn.textContent='> TRACKING...';
+  const fd=new FormData();fd.append('image',trackFile);
+  const tn=document.getElementById('tracker-select').value;
+  await fetch('/api/tracker/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tracker:tn})});
+  try{
+    const r=await fetch('/api/tracker/track',{method:'POST',body:fd});const data=await r.json();
+    if(!data.success){btn.disabled=false;btn.textContent='> Execute_Tracking';return}
+    document.getElementById('tracker-results-placeholder').classList.add('hidden');document.getElementById('tracker-results').classList.remove('hidden');
+    if(data.annotated_image)document.getElementById('tracker-annotated').src=data.annotated_image;
+    const t=document.getElementById('tracker-detection-table');t.innerHTML='';
+    data.detections.forEach((d,i)=>{const tr=document.createElement('tr');tr.style.borderBottom='1px solid rgba(0,255,65,.06)';tr.innerHTML='<td class="py-2 text-[#c8d6c060]">'+(i+1)+'</td><td class="py-2 neon">'+d.label+'</td><td class="py-2">'+(d.confidence*100).toFixed(1)+'%</td>';t.appendChild(tr)});
+  }catch(e){console.log(e)}
+  btn.disabled=false;btn.textContent='> Execute_Tracking';
 });
 
-// ── Metrics Tab ──
-let radarChart = null;
-let datasetChart = null;
-
-async function loadMetrics() {
-  try {
-    const r = await fetch('/api/metrics');
-    const data = await r.json();
-    if (!data.models) return;
-
-    const svm = data.models.robust_svm;
-    const urd = data.models.urd;
-    document.getElementById('svm-auc').textContent = svm.auc.toFixed(4);
-    document.getElementById('svm-acc').textContent = (svm.accuracy_05 * 100).toFixed(1) + '%';
-    document.getElementById('urd-auc').textContent = urd.auc.toFixed(4);
-    document.getElementById('urd-acc').textContent = (urd.accuracy_05 * 100).toFixed(1) + '%';
-
-    // Radar chart
-    const ctx = document.getElementById('radar-chart').getContext('2d');
-    if (radarChart) radarChart.destroy();
-    radarChart = new Chart(ctx, {
-      type: 'radar',
-      data: {
-        labels: ['AUC', 'Accuracy', 'Clean Precision', 'Clean Recall', 'Clean F1', 'Stego Precision', 'Stego Recall', 'Stego F1'],
-        datasets: [{
-          label: 'Robust SVM',
-          data: [svm.auc, svm.accuracy_05, svm.classification_report.clean.precision, svm.classification_report.clean.recall, svm.classification_report.clean.f1, svm.classification_report.stego.precision, svm.classification_report.stego.recall, svm.classification_report.stego.f1],
-          borderColor: '#00e639', backgroundColor: 'rgba(0,230,57,0.1)', borderWidth: 2, pointBackgroundColor: '#00e639',
-        }, {
-          label: 'UltraRobustDetector',
-          data: [urd.auc, urd.accuracy_05, urd.classification_report.clean.precision, urd.classification_report.clean.recall, urd.classification_report.clean.f1, urd.classification_report.stego.precision, urd.classification_report.stego.recall, urd.classification_report.stego.f1],
-          borderColor: '#00eefc', backgroundColor: 'rgba(0,238,252,0.1)', borderWidth: 2, pointBackgroundColor: '#00eefc',
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#e5e2e1', font: {family: 'JetBrains Mono', size: 10} } } },
-        scales: {
-          r: {
-            angleLines: { color: 'rgba(59,75,55,0.3)' }, grid: { color: 'rgba(59,75,55,0.3)' },
-            pointLabels: { color: '#84967e', font: {family: 'JetBrains Mono', size: 9} },
-            ticks: { color: '#e5e2e1', backdropColor: 'transparent', font: {family: 'JetBrains Mono', size: 8} },
-            min: 0, max: 1
-          }
-        }
-      }
-    });
-
-    // Dataset bar chart
-    const names = Object.keys(urd.per_dataset);
-    const aucs = names.map(n => urd.per_dataset[n].auc);
-    const accs = names.map(n => urd.per_dataset[n].acc);
-    const ctx2 = document.getElementById('dataset-bar-chart').getContext('2d');
-    if (datasetChart) datasetChart.destroy();
-    datasetChart = new Chart(ctx2, {
-      type: 'bar',
-      data: {
-        labels: names,
-        datasets: [
-          { label: 'AUC', data: aucs, backgroundColor: 'rgba(0,230,57,0.7)', borderColor: '#00e639', borderWidth: 1 },
-          { label: 'Accuracy', data: accs, backgroundColor: 'rgba(0,238,252,0.7)', borderColor: '#00eefc', borderWidth: 1 }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: '#e5e2e1', font: {family: 'JetBrains Mono', size: 10} } }
-        },
-        scales: {
-          x: { ticks: { color: '#84967e', font: {family: 'JetBrains Mono', size: 9} }, grid: { color: 'rgba(59,75,55,0.2)' } },
-          y: { ticks: { color: '#e5e2e1', font: {family: 'JetBrains Mono', size: 9} }, grid: { color: 'rgba(59,75,55,0.2)' }, min: 0, max: 1 }
-        }
-      }
-    });
-
-    // Per-dataset list
-    const listEl = document.getElementById('per-dataset-list');
-    listEl.innerHTML = '';
-    names.forEach(n => {
-      const d = urd.per_dataset[n];
-      const color = d.auc > 0.8 ? 'text-primary' : d.auc > 0.6 ? 'text-secondary' : 'text-error';
-      const div = document.createElement('div');
-      div.className = 'flex justify-between text-xs font-mono py-1 border-b border-outline-variant/20';
-      div.innerHTML = `<span class="text-outline">${n}</span><span class="${color}">AUC ${d.auc.toFixed(4)} | Acc ${(d.acc*100).toFixed(1)}%</span>`;
-      listEl.appendChild(div);
-    });
-
-    // Animated GIF
-    document.getElementById('animated-gif').src = '/api/metrics/animated?t=' + Date.now();
-
-    document.getElementById('kernel-status').textContent = 'ONLINE';
-    document.getElementById('kernel-led').style.background = '#00e639';
-  } catch(e) {
-    document.getElementById('kernel-status').textContent = 'OFFLINE';
-    document.getElementById('kernel-led').style.background = '#ffb4ab';
-    console.log('Metrics fetch failed:', e);
-  }
+// ══════════════════════════════════════════════════════════════════════
+// METRICS TAB
+// ══════════════════════════════════════════════════════════════════════
+let radarChart=null, datasetChart=null;
+async function loadMetrics(){
+  try{
+    const r=await fetch('/api/metrics');const data=await r.json();if(!data.models)return;
+    const svm=data.models.robust_svm, urd=data.models.urd;
+    document.getElementById('svm-auc').textContent=svm.auc.toFixed(4);document.getElementById('svm-acc').textContent=(svm.accuracy_05*100).toFixed(1)+'%';
+    document.getElementById('urd-auc').textContent=urd.auc.toFixed(4);document.getElementById('urd-acc').textContent=(urd.accuracy_05*100).toFixed(1)+'%';
+    const ctx=document.getElementById('radar-chart').getContext('2d');if(radarChart)radarChart.destroy();
+    radarChart=new Chart(ctx,{
+      type:'radar',data:{labels:['AUC','Accuracy','Clean F1','Stego F1','Clean Recall','Stego Recall'],
+      datasets:[{label:'SVM',data:[svm.auc,svm.accuracy_05,svm.classification_report.clean.f1,svm.classification_report.stego.f1,svm.classification_report.clean.recall,svm.classification_report.stego.recall],borderColor:'#00ff41',backgroundColor:'rgba(0,255,65,0.05)',borderWidth:2,pointBackgroundColor:'#00ff41'},
+      {label:'URD',data:[urd.auc,urd.accuracy_05,urd.classification_report.clean.f1,urd.classification_report.stego.f1,urd.classification_report.clean.recall,urd.classification_report.stego.recall],borderColor:'#00eefc',backgroundColor:'rgba(0,238,252,0.05)',borderWidth:2,pointBackgroundColor:'#00eefc'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#c8d6c080',font:{family:'JetBrains Mono',size:9}}}},
+        scales:{r:{angleLines:{color:'rgba(0,255,65,0.12)'},grid:{color:'rgba(0,255,65,0.12)'},pointLabels:{color:'#c8d6c060',font:{family:'JetBrains Mono',size:8}},ticks:{color:'#c8d6c040',backdropColor:'transparent',font:{family:'JetBrains Mono',size:8}},min:0,max:1}}}}
+    );
+    const names=Object.keys(urd.per_dataset), aucs=names.map(n=>urd.per_dataset[n].auc), accs=names.map(n=>urd.per_dataset[n].acc);
+    const ctx2=document.getElementById('dataset-bar-chart').getContext('2d');if(datasetChart)datasetChart.destroy();
+    datasetChart=new Chart(ctx2,{type:'bar',data:{labels:names,datasets:[{label:'AUC',data:aucs,backgroundColor:'rgba(0,255,65,0.6)',borderColor:'#00ff41',borderWidth:1},{label:'Accuracy',data:accs,backgroundColor:'rgba(0,238,252,0.6)',borderColor:'#00eefc',borderWidth:1}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#c8d6c080',font:{family:'JetBrains Mono',size:9}}}},scales:{x:{ticks:{color:'#c8d6c060',font:{family:'JetBrains Mono',size:8}},grid:{color:'rgba(0,255,65,0.06)'}},y:{ticks:{color:'#c8d6c040',font:{family:'JetBrains Mono',size:8}},grid:{color:'rgba(0,255,65,0.06)'},min:0,max:1}}}});
+    const le=document.getElementById('per-dataset-list');le.innerHTML='';
+    names.forEach(n=>{const d=urd.per_dataset[n];const c=d.auc>0.8?'var(--neon)':d.auc>0.6?'var(--cyber)':'var(--red)';const di=document.createElement('div');di.className='data-row';di.innerHTML='<span class="key">'+n+'</span><span style="color:'+c+'">AUC '+d.auc.toFixed(4)+' | Acc '+(d.acc*100).toFixed(1)+'%</span>';le.appendChild(di)});
+    document.getElementById('animated-gif').src='/api/metrics/animated?t='+Date.now();
+    document.getElementById('kernel-status').textContent='ONLINE';document.getElementById('kernel-led').className='status-dot on animate-pulse-glow';
+  }catch(e){document.getElementById('kernel-status').textContent='OFFLINE';document.getElementById('kernel-led').className='status-dot off'}
 }
-
-// ── Init ──
 loadMetrics();
-
-// Button press effects
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.97)');
-  btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
-  btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
-});
+document.querySelectorAll('button').forEach(b=>{b.addEventListener('mousedown',()=>b.style.transform='scale(0.97)');b.addEventListener('mouseup',()=>b.style.transform='scale(1)');b.addEventListener('mouseleave',()=>b.style.transform='scale(1)')});
 </script>
 </body>
 </html>
