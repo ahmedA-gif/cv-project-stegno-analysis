@@ -1,3 +1,14 @@
+---
+title: STEGANOSCAN
+emoji: 🕵️
+colorFrom: green
+colorTo: black
+sdk: docker
+python_version: "3.12"
+app_file: app.py
+pinned: false
+---
+
 # ⦿ STEGANOSCAN — Neural Forensics Terminal v4.2
 
 A **Flask-based neural forensics web application** for image steganalysis, tamper detection, object detection/tracking, and AI-generated image identification. Trained on **16,505 images** and validated on **4,127 images** with a **256-dimensional feature vector** extracted via SRM (Spatial Rich Model) filters and related steganalysis techniques.
