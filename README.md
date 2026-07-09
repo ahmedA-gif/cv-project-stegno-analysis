@@ -2,7 +2,7 @@
 title: STEGANOSCAN
 emoji: 🕵️
 colorFrom: green
-colorTo: black
+colorTo: gray
 sdk: docker
 python_version: "3.12"
 app_file: app.py
